@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BTC Sentiment Bot — Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        :root {
+            --bg: #0d1117;
+            --card: #161b22;
+            --border: #30363d;
+            --text: #e6edf3;
+            --muted: #8b949e;
+            --green: #3fb950;
+            --red: #f85149;
+            --blue: #58a6ff;
+            --orange: #d29922;
+            --purple: #bc8cff;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+        .header {
+            padding: 24px 32px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header h1 {
+            font-size: 20px;
+            font-weight: 600;
+        }
+        .header h1 span { color: var(--orange); }
+        .status-badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+        }
+        .status-running { background: rgba(63,185,80,0.15); color: var(--green); }
+        .status-waiting { background: rgba(210,153,34,0.15); color: var(--orange); }
+
+        .container { max-width: 1400px; margin: 0 auto; padding: 24px 32px; }
+
+        /* Stat cards row */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .stat-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .stat-card .label {
+            font-size: 12px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+        .stat-card .value {
+            font-size: 28px;
+            font-weight: 700;
+        }
+        .stat-card .sub {
+            font-size: 13px;
+            color: var(--muted);
+            margin-top: 4px;
+        }
+        .value.green { color: var(--green); }
+        .value.red { color: var(--red); }
+        .value.blue { color: var(--blue); }
+        .value.orange { color: var(--orange); }
+        .value.purple { color: var(--purple); }
+
+        /* Chart containers */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 24px;
+        }
+        .chart-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+        }
+        .chart-card h3 {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+            color: var(--muted);
+        }
+        .chart-card canvas { max-height: 280px; }
+        .chart-card.full { grid-column: 1 / -1; }
+
+        /* Trade table */
+        .table-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        .table-card h3 {
+            font-size: 14px;
+            font-weight: 600;
+            padding: 16px 20px;
+            border-bottom: 1px solid var(--border);
+            color: var(--muted);
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th {
+            text-align: left;
+            padding: 10px 16px;
+            font-size: 11px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            border-bottom: 1px solid var(--border);
+        }
+        td {
+            padding: 12px 16px;
+            font-size: 13px;
+            border-bottom: 1px solid var(--border);
+        }
+        tr:last-child td { border-bottom: none; }
+        .tag {
+            display: inline-block;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        .tag-buy { background: rgba(63,185,80,0.15); color: var(--green); }
+        .tag-sell { background: rgba(248,81,73,0.15); color: var(--red); }
+        .tag-bullish { background: rgba(63,185,80,0.15); color: var(--green); }
+        .tag-bearish { background: rgba(248,81,73,0.15); color: var(--red); }
+        .tag-neutral { background: rgba(139,148,158,0.15); color: var(--muted); }
+        .edge-positive { color: var(--green); }
+        .edge-negative { color: var(--red); }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--muted);
+        }
+        .empty-state h2 { font-size: 18px; margin-bottom: 8px; color: var(--text); }
+        .empty-state p { font-size: 14px; }
+        .pulse {
+            display: inline-block;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--green);
+            margin-right: 8px;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+        .refresh-note {
+            text-align: center;
+            padding: 16px;
+            font-size: 12px;
+            color: var(--muted);
+        }
+        @media (max-width: 768px) {
+            .charts-grid { grid-template-columns: 1fr; }
+            .container { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1><span>BTC</span> Sentiment Prediction Bot</h1>
+        <div>
+            <span class="status-badge status-waiting" id="status-badge">
+                <span class="pulse"></span> Loading...
+            </span>
+        </div>
+    </div>
+
+    <div class="container" id="app">
+        <div class="empty-state" id="loading">
+            <h2>Loading dashboard...</h2>
+            <p>Fetching data from the bot</p>
+        </div>
+    </div>
+
+    <script>
+    const REFRESH_INTERVAL = 30_000; // 30 seconds
+
+    // Chart.js global config for dark theme
+    Chart.defaults.color = '#8b949e';
+    Chart.defaults.borderColor = '#30363d';
+    Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica";
+
+    let fearGreedChart = null;
+    let compositeChart = null;
+    let edgeChart = null;
+    let btcChart = null;
+
+    function fmtTime(ts) {
+        if (!ts || ts === '—') return '—';
+        const d = new Date(ts);
+        return d.toLocaleString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+    }
+    function fmtMoney(v) {
+        const n = parseFloat(v);
+        return isNaN(n) ? '—' : '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    }
+    function fmtPct(v) {
+        const n = parseFloat(v);
+        return isNaN(n) ? '—' : (n * 100).toFixed(1) + '%';
+    }
+    function fmtEdge(v) {
+        const n = parseFloat(v);
+        if (isNaN(n)) return '—';
+        const pct = (n * 100).toFixed(1);
+        return n >= 0 ? '+' + pct + '%' : pct + '%';
+    }
+
+    async function fetchData() {
+        const [summaryRes, tradesRes, predictionsRes] = await Promise.all([
+            fetch('/api/summary'),
+            fetch('/api/trades'),
+            fetch('/api/predictions'),
+        ]);
+        return {
+            summary: await summaryRes.json(),
+            trades: await tradesRes.json(),
+            predictions: await predictionsRes.json(),
+        };
+    }
+
+    function renderDashboard(data) {
+        const { summary, trades, predictions } = data;
+        const container = document.getElementById('app');
+
+        // Status badge
+        const badge = document.getElementById('status-badge');
+        if (summary.status === 'running') {
+            badge.className = 'status-badge status-running';
+            badge.innerHTML = '<span class="pulse"></span> DRY RUN';
+        } else {
+            badge.className = 'status-badge status-waiting';
+            badge.innerHTML = '<span class="pulse"></span> Waiting';
+        }
+
+        if (summary.total_predictions === 0 && summary.total_trades === 0) {
+            container.innerHTML = `
+                <div class="empty-state">
+                    <h2>Bot is running</h2>
+                    <p>Waiting for the first prediction cycle... This page auto-refreshes every 30 seconds.</p>
+                </div>`;
+            return;
+        }
+
+        const dirClass = (summary.latest_direction || '').includes('bullish') ? 'green'
+                        : (summary.latest_direction || '').includes('bearish') ? 'red' : 'blue';
+
+        container.innerHTML = `
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="label">Fear & Greed Index</div>
+                    <div class="value orange">${summary.latest_fg_score}</div>
+                    <div class="sub">${summary.latest_fg_label}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">BTC Price</div>
+                    <div class="value blue">${fmtMoney(summary.latest_btc_price)}</div>
+                    <div class="sub">Last updated ${fmtTime(summary.latest_timestamp)}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Composite Signal</div>
+                    <div class="value ${dirClass}">${(summary.latest_direction || '—').toUpperCase()}</div>
+                    <div class="sub">Score: ${parseFloat(summary.latest_composite || 0).toFixed(1)}</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Total Trades</div>
+                    <div class="value">${summary.total_trades}</div>
+                    <div class="sub">${summary.buy_count} buys / ${summary.sell_count} sells</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Capital Deployed</div>
+                    <div class="value purple">${fmtMoney(summary.total_deployed)}</div>
+                    <div class="sub">Dry run mode</div>
+                </div>
+                <div class="stat-card">
+                    <div class="label">Avg Edge</div>
+                    <div class="value ${summary.avg_edge >= 0 ? 'green' : 'red'}">${fmtEdge(summary.avg_edge)}</div>
+                    <div class="sub">Confidence: ${fmtPct(summary.avg_confidence)}</div>
+                </div>
+            </div>
+
+            <div class="charts-grid">
+                <div class="chart-card">
+                    <h3>Fear & Greed Index Over Time</h3>
+                    <canvas id="fg-chart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>BTC Price Over Time</h3>
+                    <canvas id="btc-chart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Composite Signal Score</h3>
+                    <canvas id="composite-chart"></canvas>
+                </div>
+                <div class="chart-card">
+                    <h3>Trade Edge Distribution</h3>
+                    <canvas id="edge-chart"></canvas>
+                </div>
+            </div>
+
+            <div class="table-card">
+                <h3>Recent Trades (${trades.length} total)</h3>
+                <div style="overflow-x:auto">
+                    <table>
+                        <thead>
+                            <tr>
+                                <th>Time</th>
+                                <th>Market</th>
+                                <th>Side</th>
+                                <th>Price</th>
+                                <th>Size</th>
+                                <th>Cost</th>
+                                <th>Model Prob</th>
+                                <th>Market Prob</th>
+                                <th>Edge</th>
+                                <th>F&G</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="trades-body"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div class="refresh-note">Auto-refreshes every 30 seconds</div>
+        `;
+
+        renderCharts(predictions, trades);
+        renderTradesTable(trades);
+    }
+
+    function renderCharts(predictions, trades) {
+        const labels = predictions.map(p => fmtTime(p.timestamp));
+
+        // Fear & Greed chart
+        const fgCtx = document.getElementById('fg-chart');
+        if (fgCtx) {
+            if (fearGreedChart) fearGreedChart.destroy();
+            const fgScores = predictions.map(p => parseFloat(p.fear_greed_score));
+            fearGreedChart = new Chart(fgCtx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Fear & Greed',
+                        data: fgScores,
+                        borderColor: '#d29922',
+                        backgroundColor: 'rgba(210,153,34,0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 3,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { min: 0, max: 100, grid: { color: '#21262d' } },
+                        x: { grid: { display: false } }
+                    },
+                    plugins: {
+                        legend: { display: false },
+                        annotation: {}
+                    }
+                }
+            });
+        }
+
+        // BTC price chart
+        const btcCtx = document.getElementById('btc-chart');
+        if (btcCtx) {
+            if (btcChart) btcChart.destroy();
+            const btcPrices = predictions.map(p => parseFloat(p.btc_price));
+            btcChart = new Chart(btcCtx, {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'BTC Price',
+                        data: btcPrices,
+                        borderColor: '#58a6ff',
+                        backgroundColor: 'rgba(88,166,255,0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 3,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { grid: { color: '#21262d' }, ticks: { callback: v => '$' + v.toLocaleString() } },
+                        x: { grid: { display: false } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        // Composite signal chart
+        const compCtx = document.getElementById('composite-chart');
+        if (compCtx) {
+            if (compositeChart) compositeChart.destroy();
+            const compScores = predictions.map(p => parseFloat(p.composite_score));
+            const compColors = compScores.map(v => v > 20 ? '#3fb950' : v < -20 ? '#f85149' : '#8b949e');
+            compositeChart = new Chart(compCtx, {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Composite Score',
+                        data: compScores,
+                        backgroundColor: compColors,
+                        borderRadius: 4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { min: -100, max: 100, grid: { color: '#21262d' } },
+                        x: { grid: { display: false } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        // Edge distribution chart
+        const edgeCtx = document.getElementById('edge-chart');
+        if (edgeCtx && trades.length > 0) {
+            if (edgeChart) edgeChart.destroy();
+            const edges = trades.map(t => parseFloat(t.edge) * 100);
+            const edgeLabels = trades.map((t, i) => '#' + (i + 1));
+            const edgeColors = edges.map(e => e >= 0 ? 'rgba(63,185,80,0.7)' : 'rgba(248,81,73,0.7)');
+            edgeChart = new Chart(edgeCtx, {
+                type: 'bar',
+                data: {
+                    labels: edgeLabels,
+                    datasets: [{
+                        label: 'Edge %',
+                        data: edges,
+                        backgroundColor: edgeColors,
+                        borderRadius: 4,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    scales: {
+                        y: { grid: { color: '#21262d' }, ticks: { callback: v => v + '%' } },
+                        x: { grid: { display: false } }
+                    },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+    }
+
+    function renderTradesTable(trades) {
+        const tbody = document.getElementById('trades-body');
+        if (!tbody) return;
+
+        // Show newest first
+        const recent = [...trades].reverse().slice(0, 50);
+
+        tbody.innerHTML = recent.map(t => {
+            const sideClass = t.side === 'BUY' ? 'tag-buy' : 'tag-sell';
+            const edge = parseFloat(t.edge);
+            const edgeClass = edge >= 0 ? 'edge-positive' : 'edge-negative';
+            return `<tr>
+                <td>${fmtTime(t.timestamp)}</td>
+                <td style="max-width:250px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="${t.question}">${t.question}</td>
+                <td><span class="tag ${sideClass}">${t.side} ${t.outcome}</span></td>
+                <td>${fmtMoney(t.price)}</td>
+                <td>${parseFloat(t.size_shares).toFixed(1)}</td>
+                <td>${fmtMoney(t.cost_usd)}</td>
+                <td>${fmtPct(t.model_probability)}</td>
+                <td>${fmtPct(t.market_implied_prob)}</td>
+                <td class="${edgeClass}">${fmtEdge(t.edge)}</td>
+                <td>${parseFloat(t.fear_greed_score).toFixed(0)}</td>
+                <td><span class="tag" style="background:rgba(139,148,158,0.15);color:#8b949e">${t.status}</span></td>
+            </tr>`;
+        }).join('');
+    }
+
+    async function refresh() {
+        try {
+            const data = await fetchData();
+            renderDashboard(data);
+        } catch (e) {
+            console.error('Refresh failed:', e);
+        }
+    }
+
+    // Initial load + auto-refresh
+    refresh();
+    setInterval(refresh, REFRESH_INTERVAL);
+    </script>
+</body>
+</html>
