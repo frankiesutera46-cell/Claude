@@ -1,6 +1,7 @@
 import express from 'express';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
 import { config } from './config/index.js';
 import { errorHandler } from './middleware/errorHandler.js';
 import uploadRoutes from './routes/upload.js';
@@ -24,7 +25,8 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Static files
-app.use(express.static(path.join(import.meta.dirname || __dirname, '..', 'public')));
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // Serve uploaded images for the sheet viewer
 app.use('/uploads', express.static(config.uploadDir));
