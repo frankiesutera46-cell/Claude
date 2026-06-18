@@ -1,0 +1,29 @@
+@import "tailwindcss";
+
+@theme {
+  --color-field: #2d5a27;
+  --color-field-lines: #ffffff;
+  --color-chalk: #f5f5dc;
+  --color-card-bg: #1a1a2e;
+  --color-card-border: #16213e;
+  --color-accent: #e94560;
+  --color-accent-2: #0f3460;
+  --color-sidebar: #0f0f1a;
+  --color-text-primary: #e8e8e8;
+  --color-text-secondary: #a0a0b0;
+  --color-route-run: #ff6b35;
+  --color-route-pass: #4ecdc4;
+  --color-route-block: #ffe66d;
+  --font-family-display: 'Courier New', monospace;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: #0f0f1a;
+  color: #e8e8e8;
+  font-family: 'Courier New', monospace;
+}

@@ -1,0 +1,2436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Scout Card Generator</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:#F7F7F5;color:#3A3A38;font-family:'Space Grotesk','General Sans',system-ui,-apple-system,sans-serif;overflow-x:hidden}
+
+/* ---- TOP BAR ---- */
+.topbar{background:#1A3C2B;border-bottom:1px solid rgba(58,58,56,.2);padding:0 24px;display:flex;align-items:center;gap:16px;height:52px}
+.topbar .brand{display:flex;align-items:center;gap:10px}
+.topbar .brand .logo-mark{width:28px;height:28px;background:#F7F7F5;border-radius:2px;display:flex;align-items:center;justify-content:center}
+.topbar .brand .logo-mark svg{width:16px;height:16px;stroke:#1A3C2B}
+.topbar .brand span{font-family:'Space Grotesk',sans-serif;font-weight:700;font-size:13px;letter-spacing:0.1em;text-transform:uppercase;color:#F7F7F5}
+.topbar .brand .sub{font-family:'JetBrains Mono',monospace;font-size:9px;color:rgba(247,247,245,.5);letter-spacing:0.1em;font-weight:400;margin-left:-4px}
+.topbar input{background:rgba(247,247,245,.1);color:#F7F7F5;border:1px solid rgba(247,247,245,.2);padding:6px 12px;border-radius:2px;font-size:12px;font-family:'JetBrains Mono',monospace;transition:border .15s}
+.topbar input:focus{outline:none;border-color:rgba(247,247,245,.5)}
+.topbar input::placeholder{color:rgba(247,247,245,.35)}
+.topbar .game-input{flex:1;max-width:320px;margin-left:20px}
+.topbar .right{margin-left:auto;display:flex;align-items:center;gap:6px}
+.topbar .count{font-family:'JetBrains Mono',monospace;color:rgba(247,247,245,.5);font-size:10px;margin-right:10px;font-weight:400;letter-spacing:0.1em}
+
+/* ---- BUTTONS ---- */
+.btn{padding:6px 14px;border-radius:2px;border:1px solid rgba(58,58,56,.2);font-family:'JetBrains Mono',monospace;font-size:10px;cursor:pointer;font-weight:500;transition:all .15s;letter-spacing:0.05em;text-transform:uppercase}
+.btn:hover{transform:none}
+.btn-pri{background:#1A3C2B;color:#F7F7F5;border-color:#1A3C2B}
+.btn-pri:hover{background:#244d38}
+.btn-sec{background:transparent;color:#3A3A38;border:1px solid rgba(58,58,56,.2)}
+.btn-sec:hover{background:rgba(26,60,43,.05);color:#1A3C2B;border-color:rgba(26,60,43,.3)}
+.btn-add{background:transparent;color:#1A3C2B;border:1px solid rgba(26,60,43,.3)}
+.btn-add:hover{background:rgba(26,60,43,.06)}
+.btn-del{background:none;border:none;color:rgba(58,58,56,.35);font-size:13px;cursor:pointer;padding:2px 6px;font-family:'JetBrains Mono',monospace}
+.btn-del:hover{color:#FF8C69}
+
+/* ---- LAYOUT ---- */
+.layout{display:flex;height:calc(100vh - 52px)}
+
+/* ---- SIDEBAR ---- */
+.sidebar{width:220px;background:#F7F7F5;border-right:1px solid rgba(58,58,56,.12);display:flex;flex-direction:column;padding:14px 12px;gap:2px;overflow-y:auto;flex-shrink:0}
+.sidebar .btns{display:flex;gap:4px;margin-bottom:12px}
+.sidebar .btns .btn{flex:1;padding:7px 4px;font-size:9px}
+.ci{width:100%;text-align:left;padding:8px 10px;border-radius:0;font-size:11px;cursor:pointer;border:1px solid transparent;border-left:2px solid transparent;background:none;color:#3A3A38;font-family:'Space Grotesk',sans-serif;transition:.15s}
+.ci:hover{background:rgba(26,60,43,.03);border-left-color:rgba(26,60,43,.15)}
+.ci.act{background:rgba(26,60,43,.05);color:#1A3C2B;border-left-color:#1A3C2B}
+.ci .cn{font-family:'JetBrains Mono',monospace;font-weight:600;font-size:11px;letter-spacing:0.05em}
+.ci .cm{font-family:'JetBrains Mono',monospace;font-size:9px;opacity:.4;display:block;margin-top:2px;letter-spacing:0.05em}
+
+/* ---- MAIN ---- */
+.main{flex:1;padding:0;display:flex;flex-direction:column;min-width:0;background:#EEEEEC}
+.editor{background:#F7F7F5;border-left:1px solid rgba(58,58,56,.08);flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* ---- HEADER ---- */
+.eh{display:flex;align-items:center;gap:8px;padding:8px 16px;background:#F7F7F5;border-bottom:1px solid rgba(58,58,56,.12);flex-wrap:wrap}
+.eh .cnum{font-family:'JetBrains Mono',monospace;color:#1A3C2B;font-weight:600;font-size:13px;min-width:30px;letter-spacing:0.05em}
+.eh select,.eh input{background:#fff;color:#3A3A38;border:1px solid rgba(58,58,56,.15);padding:5px 8px;border-radius:2px;font-family:'JetBrains Mono',monospace;font-size:11px;transition:border .15s}
+.eh select:focus,.eh input:focus{outline:none;border-color:#1A3C2B}
+.eh .pn{flex:1;min-width:100px;font-family:'Space Grotesk',sans-serif;font-size:12px}
+.eh .dd{width:80px}
+.flip-btn{font-family:'JetBrains Mono',monospace;font-size:10px;padding:4px 10px;border-radius:2px;cursor:pointer;border:1px solid rgba(58,58,56,.15);background:transparent;color:#3A3A38;font-weight:500;transition:.15s;letter-spacing:0.05em}
+.flip-btn:hover{border-color:#1A3C2B;color:#1A3C2B}
+.flip-btn.on{background:#1A3C2B;color:#F7F7F5;border-color:#1A3C2B}
+
+/* ---- BODY ---- */
+.eb{display:flex;flex:1;min-height:0}
+.field-wrap{flex:1;padding:12px;display:flex;align-items:center;justify-content:center;min-width:0;background:#EEEEEC}
+.field-wrap svg{width:100%;height:auto;max-height:calc(100vh - 170px);display:block;border-radius:0;border:1px solid rgba(58,58,56,.15)}
+
+/* ---- RIGHT PANEL ---- */
+.rp{width:230px;border-left:1px solid rgba(58,58,56,.12);padding:14px;overflow-y:auto;flex-shrink:0;background:#F7F7F5}
+.rp-title{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:rgba(58,58,56,.45);margin-bottom:5px;margin-top:14px;font-weight:500}
+.rp-title:first-child{margin-top:0}
+.rp-wrap{display:flex;flex-wrap:wrap;gap:3px}
+.rb{font-family:'JetBrains Mono',monospace;font-size:9px;padding:3px 8px;border-radius:2px;cursor:pointer;border:1px solid;transition:.12s;font-weight:500;letter-spacing:0.03em}
+.rb:hover{filter:none;transform:none;opacity:.8}
+.np{text-align:center;padding:28px 10px;color:rgba(58,58,56,.4);font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.6;letter-spacing:0.03em}
+.sel-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:8px}
+.sel-hdr span{font-family:'Space Grotesk',sans-serif;color:#1A3C2B;font-weight:700;font-size:13px}
+.clr-btn{background:transparent;color:#FF8C69;font-family:'JetBrains Mono',monospace;font-size:9px;padding:2px 8px;border:1px solid rgba(255,140,105,.3);border-radius:2px;cursor:pointer;font-weight:500;letter-spacing:0.05em;text-transform:uppercase}
+.clr-btn:hover{background:rgba(255,140,105,.08);border-color:#FF8C69}
+.ns{margin-top:10px;padding-top:10px;border-top:1px solid rgba(58,58,56,.1)}
+.ns label{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:rgba(58,58,56,.45);display:block;margin-bottom:4px;font-weight:500}
+.ns input,.ns textarea{width:100%;background:#fff;color:#3A3A38;border:1px solid rgba(58,58,56,.15);padding:6px 8px;border-radius:2px;font-family:'JetBrains Mono',monospace;font-size:11px;transition:border .15s}
+.ns input:focus,.ns textarea:focus{outline:none;border-color:#1A3C2B}
+.ns textarea{height:44px;resize:none}
+
+/* Defensive front selector */
+.front-sel{margin-top:10px;padding-top:10px;border-top:1px solid rgba(58,58,56,.1)}
+.front-sel label{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:rgba(58,58,56,.45);display:block;margin-bottom:4px;font-weight:500}
+.front-sel select{width:100%;background:#fff;color:#3A3A38;border:1px solid rgba(58,58,56,.15);padding:5px 8px;border-radius:2px;font-family:'JetBrains Mono',monospace;font-size:11px}
+
+/* ---- DRAW TOOLBAR ---- */
+.draw-bar{display:flex;align-items:center;gap:6px;padding:6px 16px;background:#F7F7F5;border-bottom:1px solid rgba(58,58,56,.12)}
+.draw-bar .sep{width:1px;height:20px;background:rgba(58,58,56,.12);margin:0 4px}
+.tb{padding:4px 10px;border-radius:2px;border:1px solid rgba(58,58,56,.15);background:transparent;color:#3A3A38;font-family:'JetBrains Mono',monospace;font-size:10px;cursor:pointer;display:flex;align-items:center;gap:5px;font-weight:500;transition:.15s;letter-spacing:0.03em}
+.tb:hover{background:rgba(26,60,43,.04);color:#1A3C2B;border-color:rgba(26,60,43,.25)}
+.tb.on{background:#1A3C2B;color:#F7F7F5;border-color:#1A3C2B}
+.tb.eraser-on{background:#FF8C69;color:#fff;border-color:#FF8C69}
+.tb svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.draw-bar .color-btn{width:20px;height:20px;border-radius:50%;border:2px solid rgba(58,58,56,.12);cursor:pointer;transition:.15s;padding:0}
+.draw-bar .color-btn.act{border-color:#1A3C2B;outline:2px solid rgba(26,60,43,.2);outline-offset:1px}
+.draw-bar .width-btn{width:26px;height:20px;border-radius:2px;border:1px solid rgba(58,58,56,.15);background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.15s}
+.draw-bar .width-btn.act{border-color:#1A3C2B;background:rgba(26,60,43,.06)}
+.draw-bar .width-btn span{display:block;border-radius:1px;background:#3A3A38}
+.draw-bar select{background:#fff;color:#3A3A38;border:1px solid rgba(58,58,56,.15);padding:3px 8px;border-radius:2px;font-family:'JetBrains Mono',monospace;font-size:10px}
+.field-wrap svg.drawing{cursor:crosshair}
+.field-wrap svg.drawing [data-dp]{pointer-events:none}
+
+/* ---- PRESETS ---- */
+.preset-section{margin-top:12px;padding-top:12px;border-top:1px solid rgba(58,58,56,.1)}
+.preset-section label{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:rgba(58,58,56,.45);display:block;margin-bottom:5px;font-weight:500}
+.preset-row{display:flex;gap:4px;align-items:center;margin-bottom:4px}
+.preset-row .btn{padding:4px 10px;font-size:9px;flex:1;text-align:left;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.preset-row .btn-x{flex:0 0 22px;text-align:center;padding:3px;color:rgba(58,58,56,.3);background:none;border:1px solid rgba(58,58,56,.12);font-size:10px;border-radius:2px}
+.preset-row .btn-x:hover{color:#FF8C69;border-color:rgba(255,140,105,.3)}
+.save-preset-row{display:flex;gap:4px;margin-top:5px}
+.save-preset-row input{flex:1;background:#fff;color:#3A3A38;border:1px solid rgba(58,58,56,.15);padding:4px 8px;border-radius:2px;font-family:'JetBrains Mono',monospace;font-size:10px}
+.save-preset-row .btn{flex:0 0 auto;padding:4px 10px;font-size:9px}
+
+/* ---- TAGS ---- */
+.tag-row{display:flex;flex-wrap:wrap;gap:3px;padding:2px 0}
+.tag-btn{font-family:'JetBrains Mono',monospace;font-size:8px;padding:2px 7px;border-radius:2px;cursor:pointer;border:1px solid rgba(58,58,56,.12);background:transparent;color:rgba(58,58,56,.5);font-weight:500;transition:.12s;letter-spacing:0.05em;text-transform:uppercase}
+.tag-btn:hover{border-color:rgba(26,60,43,.3);color:#1A3C2B}
+.tag-btn.tag-on{background:#1A3C2B;color:#F7F7F5;border-color:#1A3C2B}
+.tag-filter{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid rgba(58,58,56,.1)}
+.tf-btn{font-family:'JetBrains Mono',monospace;font-size:8px;padding:2px 6px;border-radius:2px;cursor:pointer;border:1px solid transparent;background:none;color:rgba(58,58,56,.4);font-weight:500;transition:.12s;letter-spacing:0.05em;text-transform:uppercase}
+.tf-btn:hover{color:#1A3C2B}
+.tf-btn.tf-on{background:rgba(26,60,43,.08);color:#1A3C2B;border-color:rgba(26,60,43,.2)}
+.ci .tag-pills{display:flex;flex-wrap:wrap;gap:2px;margin-top:3px}
+.ci .tag-pill{font-family:'JetBrains Mono',monospace;font-size:7px;padding:1px 5px;border-radius:2px;background:rgba(26,60,43,.06);color:#1A3C2B;letter-spacing:0.05em;text-transform:uppercase}
+
+/* ---- SCRIPT BUILDER ---- */
+.script-toggle{font-family:'JetBrains Mono',monospace;font-size:9px;padding:5px 10px;border-radius:2px;cursor:pointer;border:1px solid rgba(58,58,56,.15);background:transparent;color:#3A3A38;font-weight:500;transition:.15s;letter-spacing:0.05em;text-transform:uppercase}
+.script-toggle:hover{border-color:rgba(26,60,43,.3);color:#1A3C2B}
+.script-toggle.on{background:#1A3C2B;color:#F7F7F5;border-color:#1A3C2B}
+.script-period{font-family:'JetBrains Mono',monospace;font-size:9px;text-transform:uppercase;letter-spacing:0.12em;color:#1A3C2B;font-weight:600;padding:8px 4px 3px;margin-top:8px;border-top:1px solid rgba(58,58,56,.08)}
+.script-item{display:flex;align-items:center;gap:6px;padding:5px 8px;border-radius:0;cursor:grab;border:1px solid transparent;border-left:2px solid transparent;font-family:'Space Grotesk',sans-serif;font-size:11px;color:#3A3A38;transition:.12s}
+.script-item:hover{background:rgba(26,60,43,.03);border-left-color:rgba(26,60,43,.15)}
+.script-item.drag-over{border-left-color:#1A3C2B;background:rgba(26,60,43,.05)}
+.script-num{font-family:'JetBrains Mono',monospace;color:#1A3C2B;font-weight:600;min-width:18px;font-size:10px;letter-spacing:0.05em}
+.script-play{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.script-add{display:flex;gap:4px;align-items:center;margin-top:8px}
+.script-add select{flex:1;background:#fff;color:#3A3A38;border:1px solid rgba(58,58,56,.15);padding:4px 6px;border-radius:2px;font-family:'JetBrains Mono',monospace;font-size:10px}
+
+/* ---- TEXT TOOL ---- */
+.tb.text-on{background:#FF8C69;color:#fff;border-color:#FF8C69}
+.field-wrap svg.text-mode{cursor:text}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(26,60,43,.15);border-radius:0}
+::-webkit-scrollbar-thumb:hover{background:rgba(26,60,43,.3)}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+(function(){
+
+// ===== CONSTANTS =====
+var FW = 720, FH = 520;
+// Field covers exactly 50 yards. 5-yard increments.
+var MARGIN_TOP = 15, MARGIN_BOT = 15;
+var FIELD_PX = FH - MARGIN_TOP - MARGIN_BOT; // 490 usable pixels
+var TOTAL_YARDS = 35;
+var YPX = FIELD_PX / TOTAL_YARDS;             // ~14 px per yard
+var Y5 = 5 * YPX;                              // ~70px per 5 yards
+
+// LOS positioned so 25 yards above, 10 yards below
+var LOS_YARDS_FROM_TOP = 25;
+var LOS_Y = MARGIN_TOP + LOS_YARDS_FROM_TOP * YPX; // ~365
+
+var CX = FW/2;
+var OL_SP = 36;
+var OL_Y = LOS_Y + 12; // OL right on the ball
+
+// Player colors matching pro apps
+var COL_OL = '#cc0000';     // Red - OL
+var COL_SKILL = '#cc0000';  // Red - skill offense
+var COL_QB = '#cc0000';     // Red - QB
+var COL_DEF_DL = '#0055cc'; // Blue - DL
+var COL_DEF_LB = '#0055cc'; // Blue - LB
+var COL_DEF_DB = '#0055cc'; // Blue - DB
+var COL_ROUTE = '#cc0000';
+var COL_RUN = '#cc0000';
+var COL_BLOCK = '#888888';
+var COL_MOTION = '#9333ea';
+
+// ===== FORMATIONS (Offense) =====
+// side types: 'c'=center, 'ol'=guard/tackle, 'qb', 'wr', 'rb', 'te'
+function olBase(){return{C:{x:CX,y:OL_Y,l:'C',side:'c'},LG:{x:CX-OL_SP,y:OL_Y,l:'LG',side:'ol'},RG:{x:CX+OL_SP,y:OL_Y,l:'RG',side:'ol'},LT:{x:CX-OL_SP*2,y:OL_Y,l:'LT',side:'ol'},RT:{x:CX+OL_SP*2,y:OL_Y,l:'RT',side:'ol'}}}
+var FORMATIONS={
+'doubR':{name:'Doubles Rt',p:function(){var o=olBase();o.QB={x:CX,y:OL_Y+70,l:'QB',side:'qb'};o.RB={x:CX+38,y:OL_Y+73,l:'RB',side:'rb'};o.X={x:65,y:OL_Y-2,l:'X',side:'wr'};o.H={x:170,y:OL_Y+18,l:'H',side:'wr'};o.Y={x:FW-150,y:OL_Y+18,l:'Y',side:'wr'};o.Z={x:FW-65,y:OL_Y-2,l:'Z',side:'wr'};return o}},
+'doubL':{name:'Doubles Lt',p:function(){var o=olBase();o.QB={x:CX,y:OL_Y+70,l:'QB',side:'qb'};o.RB={x:CX-38,y:OL_Y+73,l:'RB',side:'rb'};o.X={x:65,y:OL_Y-2,l:'X',side:'wr'};o.H={x:170,y:OL_Y+18,l:'H',side:'wr'};o.Y={x:FW-150,y:OL_Y+18,l:'Y',side:'wr'};o.Z={x:FW-65,y:OL_Y-2,l:'Z',side:'wr'};return o}},
+'3x1R':{name:'3x1 Trips R',p:function(){var o=olBase();o.QB={x:CX,y:OL_Y+70,l:'QB',side:'qb'};o.RB={x:CX+38,y:OL_Y+73,l:'RB',side:'rb'};o.X={x:65,y:OL_Y-2,l:'X',side:'wr'};o.H={x:FW-200,y:OL_Y+18,l:'H',side:'wr'};o.Y={x:FW-140,y:OL_Y+18,l:'Y',side:'wr'};o.Z={x:FW-65,y:OL_Y-2,l:'Z',side:'wr'};return o}},
+'3x1L':{name:'3x1 Trips L',p:function(){var o=olBase();o.QB={x:CX,y:OL_Y+70,l:'QB',side:'qb'};o.RB={x:CX-38,y:OL_Y+73,l:'RB',side:'rb'};o.X={x:65,y:OL_Y-2,l:'X',side:'wr'};o.H={x:200,y:OL_Y+18,l:'H',side:'wr'};o.Y={x:140,y:OL_Y+18,l:'Y',side:'wr'};o.Z={x:FW-65,y:OL_Y-2,l:'Z',side:'wr'};return o}},
+'treyR':{name:'Trey Rt',p:function(){var o=olBase();o.QB={x:CX,y:OL_Y+70,l:'QB',side:'qb'};o.RB={x:CX+38,y:OL_Y+73,l:'RB',side:'rb'};o.X={x:65,y:OL_Y-2,l:'X',side:'wr'};o.Y={x:CX+OL_SP*3,y:OL_Y,l:'Y',side:'te'};o.H={x:FW-150,y:OL_Y+18,l:'H',side:'wr'};o.Z={x:FW-65,y:OL_Y+18,l:'Z',side:'wr'};return o}},
+'treyL':{name:'Trey Lt',p:function(){var o=olBase();o.QB={x:CX,y:OL_Y+70,l:'QB',side:'qb'};o.RB={x:CX-38,y:OL_Y+73,l:'RB',side:'rb'};o.Y={x:CX-OL_SP*3,y:OL_Y,l:'Y',side:'te'};o.H={x:150,y:OL_Y+18,l:'H',side:'wr'};o.X={x:65,y:OL_Y+18,l:'X',side:'wr'};o.Z={x:FW-65,y:OL_Y-2,l:'Z',side:'wr'};return o}},
+'deuceR':{name:'Deuce Rt',p:function(){var o=olBase();o.QB={x:CX,y:OL_Y+70,l:'QB',side:'qb'};o.RB={x:CX+38,y:OL_Y+73,l:'RB',side:'rb'};o.X={x:65,y:OL_Y-2,l:'X',side:'wr'};o.H={x:170,y:OL_Y+18,l:'H',side:'wr'};o.Y={x:CX+OL_SP*3,y:OL_Y,l:'Y',side:'te'};o.Z={x:FW-65,y:OL_Y+18,l:'Z',side:'wr'};return o}},
+'deuceL':{name:'Deuce Lt',p:function(){var o=olBase();o.QB={x:CX,y:OL_Y+70,l:'QB',side:'qb'};o.RB={x:CX-38,y:OL_Y+73,l:'RB',side:'rb'};o.X={x:65,y:OL_Y+18,l:'X',side:'wr'};o.Y={x:CX-OL_SP*3,y:OL_Y,l:'Y',side:'te'};o.H={x:FW-170,y:OL_Y+18,l:'H',side:'wr'};o.Z={x:FW-65,y:OL_Y-2,l:'Z',side:'wr'};return o}},
+'empty':{name:'Empty 3x2',p:function(){var o=olBase();o.QB={x:CX,y:OL_Y+70,l:'QB',side:'qb'};o.X={x:65,y:OL_Y-2,l:'X',side:'wr'};o.H={x:170,y:OL_Y+18,l:'H',side:'wr'};o.F={x:FW-170,y:OL_Y+18,l:'F',side:'wr'};o.Y={x:FW-120,y:OL_Y+18,l:'Y',side:'wr'};o.Z={x:FW-65,y:OL_Y-2,l:'Z',side:'wr'};return o}},
+'iform':{name:'I-Form',p:function(){var o=olBase();o.QB={x:CX,y:OL_Y+18,l:'QB',side:'qb'};o.FB={x:CX,y:OL_Y+42,l:'FB',side:'rb'};o.RB={x:CX,y:OL_Y+65,l:'RB',side:'rb'};o.X={x:65,y:OL_Y-2,l:'X',side:'wr'};o.Y={x:CX+OL_SP*3,y:OL_Y,l:'Y',side:'te'};o.Z={x:FW-65,y:OL_Y-2,l:'Z',side:'wr'};return o}},
+'pistol':{name:'Pistol 2x2',p:function(){var o=olBase();o.QB={x:CX,y:OL_Y+49,l:'QB',side:'qb'};o.RB={x:CX,y:OL_Y+70,l:'RB',side:'rb'};o.X={x:65,y:OL_Y-2,l:'X',side:'wr'};o.H={x:170,y:OL_Y+18,l:'H',side:'wr'};o.Y={x:FW-150,y:OL_Y+18,l:'Y',side:'wr'};o.Z={x:FW-65,y:OL_Y-2,l:'Z',side:'wr'};return o}},
+'pistol3':{name:'Pistol 3x1',p:function(){var o=olBase();o.QB={x:CX,y:OL_Y+49,l:'QB',side:'qb'};o.RB={x:CX,y:OL_Y+70,l:'RB',side:'rb'};o.X={x:65,y:OL_Y-2,l:'X',side:'wr'};o.H={x:FW-200,y:OL_Y+18,l:'H',side:'wr'};o.Y={x:FW-140,y:OL_Y+18,l:'Y',side:'wr'};o.Z={x:FW-65,y:OL_Y-2,l:'Z',side:'wr'};return o}},
+'bunchR':{name:'Bunch R',p:function(){var o=olBase();o.QB={x:CX,y:OL_Y+70,l:'QB',side:'qb'};o.RB={x:CX+38,y:OL_Y+73,l:'RB',side:'rb'};o.X={x:65,y:OL_Y-2,l:'X',side:'wr'};o.Z={x:FW-145,y:OL_Y-2,l:'Z',side:'wr'};o.Y={x:FW-110,y:OL_Y+18,l:'Y',side:'wr'};o.H={x:FW-165,y:OL_Y+18,l:'H',side:'wr'};return o}},
+'bunchL':{name:'Bunch L',p:function(){var o=olBase();o.QB={x:CX,y:OL_Y+70,l:'QB',side:'qb'};o.RB={x:CX-38,y:OL_Y+73,l:'RB',side:'rb'};o.Z={x:FW-65,y:OL_Y-2,l:'Z',side:'wr'};o.X={x:145,y:OL_Y-2,l:'X',side:'wr'};o.Y={x:110,y:OL_Y+18,l:'Y',side:'wr'};o.H={x:165,y:OL_Y+18,l:'H',side:'wr'};return o}},
+'wingR':{name:'Wing R (12)',p:function(){var o=olBase();o.QB={x:CX,y:OL_Y+70,l:'QB',side:'qb'};o.RB={x:CX+38,y:OL_Y+73,l:'RB',side:'rb'};o.X={x:65,y:OL_Y-2,l:'X',side:'wr'};o.Y={x:CX+OL_SP*3,y:OL_Y,l:'Y',side:'te'};o.Z={x:FW-65,y:OL_Y+18,l:'Z',side:'wr'};o.H={x:CX+OL_SP*3,y:OL_Y+18,l:'H',side:'te'};return o}},
+'jumbo':{name:'Jumbo / GL',p:function(){var o=olBase();o.QB={x:CX,y:OL_Y+18,l:'QB',side:'qb'};o.FB={x:CX,y:OL_Y+42,l:'FB',side:'rb'};o.RB={x:CX,y:OL_Y+65,l:'RB',side:'rb'};o.Y={x:CX+OL_SP*3,y:OL_Y,l:'Y',side:'te'};o.H={x:CX-OL_SP*3,y:OL_Y,l:'H',side:'te'};return o}}
+};
+
+// ===== DEFENSIVE FRONTS =====
+var DEF_FRONTS={
+'none':{name:'No Defense',p:function(){return{}}},
+'43over':{name:'4-3 Over',p:function(){return{
+  E1:{x:CX-OL_SP*2.1,y:LOS_Y-10,l:'E',side:'dl'},N:{x:CX-OL_SP*0.7,y:LOS_Y-10,l:'N',side:'dl'},
+  T:{x:CX+OL_SP*1.2,y:LOS_Y-10,l:'T',side:'dl'},E2:{x:CX+OL_SP*2.4,y:LOS_Y-10,l:'E',side:'dl'},
+  W:{x:CX-OL_SP*3.5,y:LOS_Y-4.5*YPX,l:'W',side:'lb'},M:{x:CX+OL_SP*0.2,y:LOS_Y-4.5*YPX,l:'M',side:'lb'},
+  S:{x:CX+OL_SP*4,y:LOS_Y-4.5*YPX,l:'$',side:'lb'},
+  CB1:{x:89,y:LOS_Y-6*YPX,l:'C',side:'db'},CB2:{x:FW-77,y:LOS_Y-6*YPX,l:'C',side:'db'},
+  BS:{x:193,y:LOS_Y-11.5*YPX,l:'BS',side:'db'},FS:{x:536,y:LOS_Y-11.5*YPX,l:'FS',side:'db'}
+}}},
+'43under':{name:'4-3 Under',p:function(){return{
+  E1:{x:CX-OL_SP*2,y:LOS_Y-10,l:'E',side:'dl'},T1:{x:CX-OL_SP*0.5,y:LOS_Y-10,l:'T',side:'dl'},
+  N:{x:CX+OL_SP*1,y:LOS_Y-10,l:'N',side:'dl'},E2:{x:CX+OL_SP*2.5,y:LOS_Y-10,l:'E',side:'dl'},
+  W:{x:CX-OL_SP*2.5,y:LOS_Y-35,l:'W',side:'lb'},M:{x:CX,y:LOS_Y-35,l:'M',side:'lb'},
+  S:{x:CX+OL_SP*1.5,y:LOS_Y-35,l:'S',side:'lb'},
+  CB1:{x:80,y:LOS_Y-22,l:'C',side:'db'},CB2:{x:FW-80,y:LOS_Y-22,l:'C',side:'db'},
+  FS:{x:CX-55,y:LOS_Y-70,l:'FS',side:'db'},SS:{x:CX+55,y:LOS_Y-70,l:'SS',side:'db'}
+}}},
+'odd':{name:'3-4 / Odd',p:function(){return{
+  E1:{x:CX-OL_SP*2,y:LOS_Y-10,l:'E',side:'dl'},N:{x:CX,y:LOS_Y-10,l:'N',side:'dl'},
+  E2:{x:CX+OL_SP*2,y:LOS_Y-10,l:'E',side:'dl'},
+  J:{x:CX-OL_SP*3,y:LOS_Y-30,l:'J',side:'lb'},W:{x:CX-OL_SP,y:LOS_Y-35,l:'W',side:'lb'},
+  M:{x:CX+OL_SP,y:LOS_Y-35,l:'M',side:'lb'},S:{x:CX+OL_SP*3,y:LOS_Y-30,l:'S',side:'lb'},
+  CB1:{x:80,y:LOS_Y-22,l:'C',side:'db'},CB2:{x:FW-80,y:LOS_Y-22,l:'C',side:'db'},
+  FS:{x:CX-55,y:LOS_Y-70,l:'FS',side:'db'},SS:{x:CX+55,y:LOS_Y-70,l:'SS',side:'db'}
+}}},
+'tite':{name:'Tite',p:function(){return{
+  E1:{x:CX-OL_SP*1.5,y:LOS_Y-10,l:'E',side:'dl'},N:{x:CX,y:LOS_Y-10,l:'N',side:'dl'},
+  E2:{x:CX+OL_SP*1.5,y:LOS_Y-10,l:'E',side:'dl'},
+  J:{x:CX-OL_SP*3,y:LOS_Y-28,l:'J',side:'lb'},W:{x:CX-OL_SP*0.5,y:LOS_Y-35,l:'W',side:'lb'},
+  M:{x:CX+OL_SP*0.5,y:LOS_Y-35,l:'M',side:'lb'},S:{x:CX+OL_SP*3,y:LOS_Y-28,l:'S',side:'lb'},
+  CB1:{x:80,y:LOS_Y-22,l:'C',side:'db'},CB2:{x:FW-80,y:LOS_Y-22,l:'C',side:'db'},
+  FS:{x:CX-55,y:LOS_Y-70,l:'FS',side:'db'},SS:{x:CX+55,y:LOS_Y-70,l:'SS',side:'db'}
+}}},
+'bear':{name:'Bear',p:function(){return{
+  E1:{x:CX-OL_SP*2,y:LOS_Y-10,l:'E',side:'dl'},T1:{x:CX-OL_SP,y:LOS_Y-10,l:'T',side:'dl'},
+  N:{x:CX,y:LOS_Y-10,l:'N',side:'dl'},T2:{x:CX+OL_SP,y:LOS_Y-10,l:'T',side:'dl'},
+  E2:{x:CX+OL_SP*2,y:LOS_Y-10,l:'E',side:'dl'},
+  W:{x:CX-OL_SP*3,y:LOS_Y-30,l:'W',side:'lb'},M:{x:CX,y:LOS_Y-38,l:'M',side:'lb'},
+  S:{x:CX+OL_SP*3,y:LOS_Y-30,l:'S',side:'lb'},
+  CB1:{x:80,y:LOS_Y-22,l:'C',side:'db'},CB2:{x:FW-80,y:LOS_Y-22,l:'C',side:'db'},
+  FS:{x:CX,y:LOS_Y-80,l:'FS',side:'db'}
+}}},
+'nickel':{name:'Nickel',p:function(){return{
+  E1:{x:CX-OL_SP*2,y:LOS_Y-10,l:'E',side:'dl'},T1:{x:CX-OL_SP*0.5,y:LOS_Y-10,l:'T',side:'dl'},
+  T2:{x:CX+OL_SP*0.5,y:LOS_Y-10,l:'T',side:'dl'},E2:{x:CX+OL_SP*2,y:LOS_Y-10,l:'E',side:'dl'},
+  M:{x:CX-OL_SP*0.5,y:LOS_Y-35,l:'M',side:'lb'},W:{x:CX+OL_SP*1.5,y:LOS_Y-35,l:'W',side:'lb'},
+  CB1:{x:80,y:LOS_Y-22,l:'C',side:'db'},CB2:{x:FW-80,y:LOS_Y-22,l:'C',side:'db'},
+  NI:{x:FW-165,y:LOS_Y-22,l:'N',side:'db'},
+  FS:{x:CX-55,y:LOS_Y-70,l:'FS',side:'db'},SS:{x:CX+55,y:LOS_Y-70,l:'SS',side:'db'}
+}}},
+'dime':{name:'Dime',p:function(){return{
+  E1:{x:CX-OL_SP*2,y:LOS_Y-10,l:'E',side:'dl'},T1:{x:CX-OL_SP*0.5,y:LOS_Y-10,l:'T',side:'dl'},
+  T2:{x:CX+OL_SP*0.5,y:LOS_Y-10,l:'T',side:'dl'},E2:{x:CX+OL_SP*2,y:LOS_Y-10,l:'E',side:'dl'},
+  M:{x:CX,y:LOS_Y-35,l:'M',side:'lb'},
+  CB1:{x:80,y:LOS_Y-22,l:'C',side:'db'},CB2:{x:FW-80,y:LOS_Y-22,l:'C',side:'db'},
+  NI:{x:FW-165,y:LOS_Y-22,l:'N',side:'db'},DI:{x:165,y:LOS_Y-22,l:'D',side:'db'},
+  FS:{x:CX-55,y:LOS_Y-70,l:'FS',side:'db'},SS:{x:CX+55,y:LOS_Y-70,l:'SS',side:'db'}
+}}}
+};
+
+// ===== ROUTES (NFL Route Tree - proper depths) =====
+// YPX = 5 px/yard. Depths: Hitch=6yd, Slant=6yd stem, Out/In=10yd, Curl=12yd,
+// Comeback=20yd, Dig=20yd, Post=10-12yd stem, Corner=10yd stem, Go=25+yd,
+// Seam=25yd, Wheel=backfield release, etc.
+var ROUTES={
+go:{n:'Go',t:'pass',c:COL_ROUTE},
+comeback:{n:'Comeback',t:'pass',c:COL_ROUTE},
+shake:{n:'Shake',t:'pass',c:COL_ROUTE},
+sqout:{n:'Sq Out',t:'pass',c:COL_ROUTE},
+puma:{n:'Puma',t:'pass',c:COL_ROUTE},
+omaha:{n:'Omaha',t:'pass',c:COL_ROUTE},
+post:{n:'Post',t:'pass',c:COL_ROUTE},
+deepover:{n:'Deep Over',t:'pass',c:COL_ROUTE},
+dagger:{n:'Dagger',t:'pass',c:COL_ROUTE},
+dig:{n:'Dig',t:'pass',c:COL_ROUTE},
+inhook:{n:'In-Hook',t:'pass',c:COL_ROUTE},
+flkpost:{n:'Flk Post',t:'pass',c:COL_ROUTE},
+pivot:{n:'Pivot',t:'pass',c:COL_ROUTE},
+slant:{n:'Slant',t:'pass',c:COL_ROUTE},
+sluggo:{n:'Sluggo',t:'pass',c:COL_ROUTE},
+hitch:{n:'Hitch',t:'pass',c:COL_ROUTE},
+under:{n:'Under',t:'pass',c:COL_ROUTE},
+arrow:{n:'Arrow',t:'pass',c:COL_ROUTE},
+smoke:{n:'Smoke',t:'pass',c:COL_ROUTE},
+flanker:{n:'Flank Drive',t:'pass',c:COL_ROUTE},
+spot:{n:'Spot',t:'pass',c:COL_ROUTE},
+deepx:{n:'Deep Cross',t:'pass',c:COL_ROUTE},
+basicx:{n:'Basic Cross',t:'pass',c:COL_ROUTE},
+seam:{n:'Seam/All Go',t:'pass',c:COL_ROUTE},
+lookie:{n:'Lookie',t:'pass',c:COL_ROUTE},
+corner:{n:'Corner',t:'pass',c:COL_ROUTE},
+flat:{n:'Flat',t:'pass',c:COL_ROUTE},
+screen:{n:'Screen',t:'pass',c:COL_ROUTE},
+swing:{n:'Swing',t:'pass',c:COL_ROUTE},
+wheel:{n:'Wheel',t:'pass',c:COL_ROUTE},
+// Run
+riz:{n:'IZ',t:'run',c:COL_RUN},roz:{n:'OZ',t:'run',c:COL_RUN},rpwr:{n:'Power',t:'run',c:COL_RUN},
+rctr:{n:'Counter',t:'run',c:COL_RUN},rdraw:{n:'Draw',t:'run',c:COL_RUN},rswp:{n:'Sweep',t:'run',c:COL_RUN},rdive:{n:'Dive',t:'run',c:COL_RUN},
+// Block
+bpass:{n:'Pass Pro',t:'block',c:COL_BLOCK},
+bdrive:{n:'Drive',t:'block',c:COL_BLOCK},
+bdown:{n:'Down',t:'block',c:COL_BLOCK},
+breach:{n:'Reach',t:'block',c:COL_BLOCK},
+bpull:{n:'Pull',t:'block',c:COL_BLOCK},
+btrap:{n:'Trap',t:'block',c:COL_BLOCK},
+bkick:{n:'Kick Out',t:'block',c:COL_BLOCK},
+blead:{n:'Lead',t:'block',c:COL_BLOCK},
+bcombo:{n:'Combo',t:'block',c:COL_BLOCK},
+bcut:{n:'Cut',t:'block',c:COL_BLOCK},
+bfold:{n:'Fold',t:'block',c:COL_BLOCK},
+bwham:{n:'Wham',t:'block',c:COL_BLOCK},
+// Motion
+motl:{n:'Mot L',t:'motion',c:COL_MOTION},motr:{n:'Mot R',t:'motion',c:COL_MOTION}
+};
+
+var RGROUPS={
+  'Outside'  :['go','comeback','shake','sqout','puma','omaha','corner'],
+  'Inside'   :['post','deepover','dagger','dig','inhook','flkpost','pivot','slant','sluggo','hitch'],
+  'Short/Slot':['under','arrow','smoke','flanker','spot','deepx','basicx','seam','lookie','flat','screen','swing','wheel'],
+  'Run'      :['riz','roz','rpwr','rctr','rdraw','rswp','rdive'],
+  'Block'    :['bpass','bdrive','bdown','breach','bpull','btrap','bkick','blead','bcombo','bcut','bfold','bwham'],
+  'Motion'   :['motl','motr']
+};
+
+// Route paths with NFL-accurate depths (Y = yards * YPX, upfield = negative Y)
+function routePath(rk,px,py,playerIsOnRight){
+  var m = playerIsOnRight ? -1 : 1; // mirror for right-side players
+  var Y = YPX; // ~14 pixels per yard vertical
+  var X = YPX * 0.7; // horizontal scale
+  var P={
+    // OUTSIDE ROUTES (break away from center of field)
+    go:       [[0,-25*Y]],                                          // 1. Go/Vert - straight vertical 25yds
+    comeback: [[0,-18*Y],[-5*X*m, 5*Y]],                           // 2. Comeback - 18yd, break back outside
+    shake:    [[0,-11*Y],[-8*X*m,-5*Y]],                            // 3. Shake - 11yd stem, break to corner
+    sqout:    [[0,-10*Y],[-12*X*m, 0]],                             // 4. Square Out - 10yd, sharp turn out
+    puma:     [[0,-14*Y],[-6*X*m, 4*Y]],                            // 5. Puma - 14yd, comeback outside
+    omaha:    [[0,-6*Y],[-10*X*m, 0]],                              // 7. Omaha - 6yd speed out
+    corner:   [[0,-10*Y],[-8*X*m,-10*Y]],                           // 26. Corner - 10yd stem, 45 out+up
+
+    // INSIDE ROUTES (break toward center of field)
+    post:     [[0,-10*Y],[6*X*m,-10*Y]],                            // 8. Post - 10yd stem, 45 degree inside
+    deepover: [[0,-10*Y],[6*X*m,-8*Y],[15*X*m,0]],                 // 9. Deep Over - post stem, flatten at 18
+    dagger:   [[0,-15*Y],[18*X*m,0]],                               // 10. Dagger - 15yd stem, flat inside
+    dig:      [[0,-10*Y],[18*X*m,0]],                               // 11. Dig - 10yd stem, sharp 90 flat inside
+    inhook:   [[0,-12*Y],[2*X*m,2*Y]],                              // 12. In-Hook - 12yd, settle inside
+    flkpost:  [[0,-8*Y],[5*X*m,-6*Y]],                              // 13. Flk Short Post - 8yd, shallow post
+    pivot:    [[0,-10*Y],[-3*X*m,2*Y],[6*X*m,-2*Y]],               // 14. Pivot - plant outside, pivot to QB
+    slant:    [[0,-3*Y],[8*X*m,-10*Y]],                             // 15. Slant - 3yd stem, 45 inside
+    sluggo:   [[0,-3*Y],[4*X*m,-3*Y],[-6*X*m,-14*Y]],              // 15a. Sluggo - sell slant, go
+    hitch:    [[0,-6*Y],[-1*X*m,2*Y]],                              // 16. Hitch - 6yd, sit
+
+    // SHORT / SLOT ROUTES
+    under:    [[0,-2*Y],[22*X*m,0]],                                // Under/Drag - 2yd stem, flat across underneath
+    arrow:    [[0,-4*Y],[-6*X*m,-4*Y]],                             // 17. Arrow - angle to void
+    smoke:    [[-1*X*m,1*Y],[6*X*m,-4*Y]],                         // 18. Smoke - quick inside
+    flanker:  [[12*X*m,-4*Y]],                                      // 19. Flanker Drive - underneath LBs
+    spot:     [[3*X*m,-5*Y]],                                       // 20. Spot - settle over ball
+    deepx:    [[0,-4*Y],[22*X*m,-14*Y]],                            // 21. Deep Cross - angle across 18-22yd
+    basicx:   [[0,-3*Y],[18*X*m,-7*Y]],                             // 22. Basic Cross - 10yd across
+    seam:     [[0,-22*Y]],                                          // 23. Seam - vertical 22yds
+    lookie:   [[0,-3*Y],[4*X*m,-12*Y]],                             // 24. Lookie - slight inside angle
+    flat:     [[-8*X*m,-2*Y]],                                      // Flat
+    screen:   [[-3*X*m,2*Y],[-7*X*m,1*Y]],                         // Screen
+    swing:    [[-8*X*m,1*Y],[-4*X*m,-8*Y]],                        // Swing
+    wheel:    [[-6*X*m,1*Y],[-1*X*m,-22*Y]],                       // Wheel
+
+    // RUN
+    riz:  [[2*X*m,-6*Y]],
+    roz:  [[-5*X*m,-2*Y],[-4*X*m,-6*Y]],
+    rpwr: [[3*X*m,-3*Y],[0,-5*Y]],
+    rctr: [[-3*X*m,-1*Y],[5*X*m,-8*Y]],
+    rdraw:[[0,1*Y],[2*X*m,-10*Y]],
+    rswp: [[-10*X*m,0],[-4*X*m,-8*Y]],
+    rdive:[[0,-6*Y]],
+    // Block schemes
+    bpass:  [[0,0.5*Y]],                                            // Pass Pro - short set back
+    bdrive: [[0,-1.5*Y]],                                           // Drive/Base - straight ahead short
+    bdown:  [[3*X*m,-1.5*Y]],                                       // Down block - angle inside
+    breach: [[-3*X*m,-1.5*Y]],                                      // Reach block - angle outside
+    bpull:  [[-4*X*m,1*Y],[-4*X*m,-3*Y]],                          // Pull - behind OL then upfield
+    btrap:  [[4*X*m,0.5*Y],[0,-2.5*Y]],                             // Trap - through gap, kick out
+    bkick:  [[-3*X*m,-2.5*Y]],                                      // Kick out - angle out on EMOL
+    blead:  [[0,-3*Y]],                                              // Lead - straight through hole
+    bcombo: [[0,-1.5*Y],[2*X*m,-2*Y]],                              // Combo - double then climb to LB
+    bcut:   [[0,-0.8*Y]],                                            // Cut block - low short
+    bfold:  [[-2*X*m,1*Y],[-2*X*m,-3*Y]],                          // Fold - behind adjacent OL then up
+    bwham:  [[4*X*m,-2*Y]],                                          // Wham - inside-out kick block
+    // Motion
+    motl:[[-45,0]],motr:[[45,0]]
+  };
+  var segs=P[rk]||[[0,-8*Y]];
+  var pts=[{x:px,y:py}];
+  var cx=px,cy=py;
+  for(var i=0;i<segs.length;i++){cx+=segs[i][0];cy+=segs[i][1];pts.push({x:cx,y:cy})}
+  return pts;
+}
+
+function mirrorPlayers(players){
+  var p={};var keys=Object.keys(players);
+  for(var i=0;i<keys.length;i++){var k=keys[i];p[k]={x:CX+(CX-players[k].x),y:players[k].y,l:players[k].l,side:players[k].side}}
+  return p;
+}
+
+var OL_KEYS=['C','LG','RG','LT','RT'];
+
+// ===== STATE =====
+var nid=1;
+function mkCard(){return{id:nid++,fk:'doubR',dfk:'none',play:'',hash:'M',dd:'',notes:'',mir:false,asgn:{},pn:{},opos:null,dpos:null,lines:[],lpos:{},cl:{},routePts:{},textBoxes:[],tags:[]}}
+var cards=[mkCard()];
+var activeIdx=0;
+var selPlayer=null;
+var selSide='off';
+var gameTitle='Week 1 Scout Cards';
+var dragInfo=null;
+
+// Undo stack
+var undoStack=[];
+var MAX_UNDO=50;
+function pushUndo(){
+  undoStack.push(JSON.stringify(cards));
+  if(undoStack.length>MAX_UNDO)undoStack.shift();
+}
+function popUndo(){
+  if(undoStack.length===0)return false;
+  var snap=JSON.parse(undoStack.pop());
+  cards=snap;
+  if(activeIdx>=cards.length)activeIdx=cards.length-1;
+  selPlayer=null;selLine=null;selTextBox=null;
+  return true;
+}
+
+// Drawing state
+var drawMode=false;
+var eraserMode=false;
+var textMode=false;
+var drawColor='#cc0000';
+var drawWidth=2;
+var drawStyle='solid'; // solid, dashed, arrow
+var currentLine=null; // {pts:[], color, width, style}
+var DRAW_COLORS=['#cc0000','#0055cc','#000000','#888888','#9333ea','#16a34a','#1A3C2B'];
+var DRAW_WIDTHS=[1.5,2.5,4];
+
+// Feature 3: Tags
+var TAG_OPTIONS=['Run','Pass','Screen','RPO','Play Action','Boot','Gadget','Special Teams'];
+var activeTagFilter=null;
+
+// Feature 5: Practice Script
+var practiceScript=[];
+var PERIODS=['Indy','Team','7on7','Blitz Period','Red Zone','2-Minute','Special Teams'];
+var scriptMode=false;
+var scriptDragIdx=null;
+function loadScript(){try{var r=localStorage.getItem('scoutScript');if(r)practiceScript=JSON.parse(r)}catch(e){}}
+function saveScript(){try{localStorage.setItem('scoutScript',JSON.stringify(practiceScript))}catch(e){}}
+loadScript();
+
+var selTextBox=null; // index of selected text box
+var tbNid=1;
+var selLine=null; // index of selected drawn line
+
+// ===== PRESETS (saved to localStorage) =====
+// Each preset: {name:string, data:object}
+// offPresets: saves current offensive player positions {fk, opos}
+// defPresets: saves current defensive player positions {dfk, dpos}
+// routePresets: saves route assignments for all players {asgn}
+var offPresets=[];
+var defPresets=[];
+var routePresets=[];
+
+function loadPresets(){
+  try{
+    var raw=localStorage.getItem('scoutPresets');
+    if(raw){var d=JSON.parse(raw);offPresets=d.off||[];defPresets=d.def||[];routePresets=d.route||[]}
+  }catch(e){}
+}
+function savePresets(){
+  try{localStorage.setItem('scoutPresets',JSON.stringify({off:offPresets,def:defPresets,route:routePresets}))}catch(e){}
+}
+loadPresets();
+
+function getHashOffset(card){
+  return HASH_OFFSETS[card.hash] || 0;
+}
+
+function getOffPlayers(card){
+  var fm=FORMATIONS[card.fk];if(!fm)return{};
+  var p=fm.p();
+  if(card.mir)p=mirrorPlayers(p);
+  // Apply hash offset to base formation positions
+  var ho=getHashOffset(card);
+  if(ho!==0){
+    var ks=Object.keys(p);
+    for(var i=0;i<ks.length;i++){
+      p[ks[i]].x+=ho;
+      if(p[ks[i]].x<SL+15) p[ks[i]].x=SL+15;
+      if(p[ks[i]].x>SR-15) p[ks[i]].x=SR-15;
+    }
+  }
+  // Override with any custom-dragged positions (stored as absolute coords)
+  if(card.opos){var ks2=Object.keys(card.opos);for(var i=0;i<ks2.length;i++){if(p[ks2[i]]){p[ks2[i]].x=card.opos[ks2[i]].x;p[ks2[i]].y=card.opos[ks2[i]].y}}}
+  return p;
+}
+function getDefPlayers(card){
+  var df=DEF_FRONTS[card.dfk];if(!df)return{};
+  var p=df.p();
+  // Apply hash offset to base
+  var ho=getHashOffset(card);
+  if(ho!==0){
+    var ks=Object.keys(p);
+    for(var i=0;i<ks.length;i++){
+      p[ks[i]].x+=ho;
+      if(p[ks[i]].x<SL+15) p[ks[i]].x=SL+15;
+      if(p[ks[i]].x>SR-15) p[ks[i]].x=SR-15;
+    }
+  }
+  // Override with custom positions
+  if(card.dpos){var ks2=Object.keys(card.dpos);for(var i=0;i<ks2.length;i++){if(p[ks2[i]]){p[ks2[i]].x=card.dpos[ks2[i]].x;p[ks2[i]].y=card.dpos[ks2[i]].y}}}
+  return p;
+}
+
+// ===== SVG FIELD =====
+// Hash positions (stored globally for use in formation offsets)
+var SL=40, SR=FW-40;
+var FIELD_W = SR - SL; // 640
+var HL = SL + FIELD_W * 0.333;  // left hash ~253
+var HR = SR - FIELD_W * 0.333;  // right hash ~467
+var MID_L = (SL + HL) / 2 + 20; // left-middle ~166
+var MID_R = (HR + SR) / 2 - 20; // right-middle ~554
+
+// Hash position offsets: how far to shift the center of the formation
+// CX is the default center (360). Each hash position moves it.
+var HASH_OFFSETS = {
+  'M': 0,
+  'L': HL - CX,       // shift left to left hash (~-107)
+  'R': HR - CX,       // shift right to right hash (~+107)
+  'LM': MID_L - CX,   // shift to left-middle (~-194)
+  'RM': MID_R - CX    // shift to right-middle (~+194)
+};
+
+function buildField(){
+  var s='';
+
+  // White field background
+  s+='<rect x="0" y="0" width="'+FW+'" height="'+FH+'" fill="#ffffff"/>';
+
+  // Yard lines every 5 yards
+  for(var i=0;i<=TOTAL_YARDS/5;i++){
+    var yy = MARGIN_TOP + i * Y5;
+    if(yy < MARGIN_TOP - 1 || yy > FH - MARGIN_BOT + 1) continue;
+    var losIdx = LOS_YARDS_FROM_TOP/5; var isLOS = (i === losIdx);
+    if(isLOS) continue;
+    s+='<line x1="'+SL+'" y1="'+yy.toFixed(1)+'" x2="'+SR+'" y2="'+yy.toFixed(1)+'" stroke="#d0d0d0" stroke-width="0.7"/>';
+  }
+
+  // Hash marks EVERY 1 YARD at both hash positions + sideline ticks
+  var Y1 = YPX; // 1 yard in pixels
+  for(var yd=0;yd<=TOTAL_YARDS;yd++){
+    var hy = MARGIN_TOP + yd * Y1;
+    if(hy < 2 || hy > FH - 2) continue;
+    var is5 = (yd % 5 === 0);
+    var tickW = is5 ? 5 : 3;
+    var sw = is5 ? 1.2 : 0.7;
+    var col = is5 ? '#999' : '#bbb';
+    // Left hash ticks
+    s+='<line x1="'+(HL-tickW)+'" y1="'+hy.toFixed(1)+'" x2="'+(HL+tickW)+'" y2="'+hy.toFixed(1)+'" stroke="'+col+'" stroke-width="'+sw+'"/>';
+    // Right hash ticks
+    s+='<line x1="'+(HR-tickW)+'" y1="'+hy.toFixed(1)+'" x2="'+(HR+tickW)+'" y2="'+hy.toFixed(1)+'" stroke="'+col+'" stroke-width="'+sw+'"/>';
+    // Sideline ticks (only on 5-yard lines)
+    if(is5){
+      s+='<line x1="'+SL+'" y1="'+hy.toFixed(1)+'" x2="'+(SL+6)+'" y2="'+hy.toFixed(1)+'" stroke="#999" stroke-width="1"/>';
+      s+='<line x1="'+(SR-6)+'" y1="'+hy.toFixed(1)+'" x2="'+SR+'" y2="'+hy.toFixed(1)+'" stroke="#999" stroke-width="1"/>';
+    }
+  }
+
+  // Yard numbers - only 10 and 20 above LOS (defensive side)
+  for(var i=0;i<=TOTAL_YARDS/5;i++){
+    var yy = MARGIN_TOP + i * Y5;
+    if(yy < MARGIN_TOP || yy > FH - MARGIN_BOT) continue;
+    var yardsFromLOS = (LOS_YARDS_FROM_TOP/5 - i) * 5;
+    // Only show 10 and 20 on the defensive side (positive = upfield)
+    if(yardsFromLOS !== 10 && yardsFromLOS !== 20) continue;
+    var label = yardsFromLOS.toString();
+    var lnx = SL + 85;
+    var rnx = SR - 85;
+    s+='<text x="'+lnx+'" y="'+(yy+7).toFixed(1)+'" fill="#b0b0b0" font-size="22" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle">'+label+'</text>';
+    s+='<text x="'+rnx+'" y="'+(yy+7).toFixed(1)+'" fill="#b0b0b0" font-size="22" font-family="Arial,sans-serif" font-weight="bold" text-anchor="middle">'+label+'</text>';
+  }
+
+  // Sidelines
+  s+='<line x1="'+SL+'" y1="0" x2="'+SL+'" y2="'+FH+'" stroke="#aaa" stroke-width="1.5"/>';
+  s+='<line x1="'+SR+'" y1="0" x2="'+SR+'" y2="'+FH+'" stroke="#aaa" stroke-width="1.5"/>';
+
+  // LOS - bold black
+  s+='<line x1="'+SL+'" y1="'+LOS_Y.toFixed(1)+'" x2="'+SR+'" y2="'+LOS_Y.toFixed(1)+'" stroke="#222" stroke-width="2.5"/>';
+
+  return s;
+}
+
+// Build draggable text labels for play name, D&D, notes on the field
+function buildTextLabels(card){
+  var s='';
+  // Default positions: play=top left, dd=top right, notes=center field
+  var defaults={play:{x:100,y:18},dd:{x:FW-100,y:18},notes:{x:CX,y:LOS_Y*0.5}};
+  if(!card.lpos)card.lpos={};
+  var lp={
+    play: card.lpos.play || defaults.play,
+    dd: card.lpos.dd || defaults.dd,
+    notes: card.lpos.notes || defaults.notes
+  };
+
+  // Play Name - top left, bold title
+  if(card.play){
+    var pw=Math.max(100,card.play.length*9);
+    s+='<rect x="'+(lp.play.x-pw/2)+'" y="'+(lp.play.y-14)+'" width="'+pw+'" height="22" fill="transparent" data-dp="t_play" style="cursor:move"/>';
+    s+='<text x="'+lp.play.x+'" y="'+(lp.play.y+2)+'" text-anchor="middle" fill="#222" font-size="15" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+esc(card.play)+'</text>';
+  }
+
+  // Down & Distance - top right
+  if(card.dd){
+    var dw=Math.max(60,card.dd.length*9);
+    s+='<rect x="'+(lp.dd.x-dw/2)+'" y="'+(lp.dd.y-12)+'" width="'+dw+'" height="20" fill="transparent" data-dp="t_dd" style="cursor:move"/>';
+    s+='<text x="'+lp.dd.x+'" y="'+(lp.dd.y+2)+'" text-anchor="middle" fill="#444" font-size="13" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+esc(card.dd)+'</text>';
+  }
+
+  // Hash indicator removed - dropdown is sufficient
+
+  // Notes - center of field, moveable
+  if(card.notes){
+    var nw=Math.max(100,card.notes.length*6.5);
+    s+='<rect x="'+(lp.notes.x-nw/2)+'" y="'+(lp.notes.y-10)+'" width="'+nw+'" height="18" fill="transparent" data-dp="t_notes" style="cursor:move"/>';
+    s+='<text x="'+lp.notes.x+'" y="'+(lp.notes.y+3)+'" text-anchor="middle" fill="#666" font-size="11" font-family="Arial,sans-serif" font-style="italic" pointer-events="none">'+esc(card.notes)+'</text>';
+  }
+
+  // Player-specific notes
+  if(card.pn){
+    var pnKeys=Object.keys(card.pn);
+    var pnIdx=0;
+    for(var pi=0;pi<pnKeys.length;pi++){
+      var pnk=pnKeys[pi], pnText=card.pn[pnk];
+      if(!pnText)continue;
+      var pnKey='pn_'+pnk;
+      var pnPos=card.lpos[pnKey]||{x:100+pnIdx*140, y:LOS_Y*0.5+20};
+      var pnw=Math.max(80,(pnk.length+pnText.length+2)*6);
+      s+='<rect x="'+(pnPos.x-pnw/2)+'" y="'+(pnPos.y-8)+'" width="'+pnw+'" height="14" fill="transparent" data-dp="t_'+pnKey+'" style="cursor:move"/>';
+      s+='<text x="'+pnPos.x+'" y="'+(pnPos.y+3)+'" text-anchor="middle" fill="#555" font-size="9" font-family="Arial,sans-serif" pointer-events="none">'+pnk+': '+esc(pnText)+'</text>';
+      pnIdx++;
+    }
+  }
+
+  return s;
+}
+
+function buildDrawnLines(lines){
+  var s='';
+  for(var li=0;li<lines.length;li++){
+    var ln=lines[li];
+    if(!ln.pts||ln.pts.length<2)continue;
+    var isCurved=(ln.style==='curved'||ln.style==='curvedarrow'||ln.style==='curvedblock');
+    var dLine='M '+ln.pts[0].x.toFixed(1)+' '+ln.pts[0].y.toFixed(1);
+    for(var pi=1;pi<ln.pts.length;pi++){
+      dLine+=' L '+ln.pts[pi].x.toFixed(1)+' '+ln.pts[pi].y.toFixed(1);
+    }
+    var d=isCurved?smoothPath(ln.pts):dLine;
+    var isSel=(selLine===li);
+    var dash=ln.style==='dashed'?' stroke-dasharray="8,5"':'';
+    // Wider invisible hit area for clicking to select (always straight for hit testing)
+    s+='<path d="'+dLine+'" fill="none" stroke="transparent" stroke-width="'+(Math.max(10,ln.width+8))+'" data-linesel="'+li+'" style="cursor:pointer"/>';
+    s+='<path d="'+d+'" fill="none" stroke="'+ln.color+'" stroke-width="'+ln.width+'" stroke-linecap="round" stroke-linejoin="round"'+dash+' data-line="'+li+'"'+(isSel?' filter="url(#selGlow)"':'')+'/>';
+    // Arrow endpoint
+    if((ln.style==='arrow'||ln.style==='curvedarrow')&&ln.pts.length>=2){
+      var ep=ln.pts[ln.pts.length-1];
+      var lp=ln.pts[Math.max(0,ln.pts.length-3)];
+      var ang=Math.atan2(ep.y-lp.y,ep.x-lp.x);
+      var sz=Math.max(6,ln.width*3);
+      var ax1=ep.x-sz*Math.cos(ang-0.4),ay1=ep.y-sz*Math.sin(ang-0.4);
+      var ax2=ep.x-sz*Math.cos(ang+0.4),ay2=ep.y-sz*Math.sin(ang+0.4);
+      s+='<polygon points="'+ep.x.toFixed(1)+','+ep.y.toFixed(1)+' '+ax1.toFixed(1)+','+ay1.toFixed(1)+' '+ax2.toFixed(1)+','+ay2.toFixed(1)+'" fill="'+ln.color+'" data-line="'+li+'"/>';
+    }
+    // Block endpoint: flat perpendicular cap
+    if((ln.style==='block'||ln.style==='curvedblock')&&ln.pts.length>=2){
+      var bep=ln.pts[ln.pts.length-1];
+      var blp=ln.pts[Math.max(0,ln.pts.length-3)];
+      var bang=Math.atan2(bep.y-blp.y,bep.x-blp.x);
+      var bsz=Math.max(7,ln.width*3);
+      var bx1=bep.x+bsz*Math.cos(bang+1.57),by1=bep.y+bsz*Math.sin(bang+1.57);
+      var bx2=bep.x+bsz*Math.cos(bang-1.57),by2=bep.y+bsz*Math.sin(bang-1.57);
+      s+='<line x1="'+bx1.toFixed(1)+'" y1="'+by1.toFixed(1)+'" x2="'+bx2.toFixed(1)+'" y2="'+by2.toFixed(1)+'" stroke="'+ln.color+'" stroke-width="2.5" stroke-linecap="round" data-line="'+li+'"/>';
+    }
+    // Endpoint handles when selected
+    if(isSel){
+      var sp=ln.pts[0];
+      var ep2=ln.pts[ln.pts.length-1];
+      s+='<circle cx="'+sp.x.toFixed(1)+'" cy="'+sp.y.toFixed(1)+'" r="5" fill="#1A3C2B" stroke="#fff" stroke-width="1.5" data-lnpt="'+li+'_0" style="cursor:grab" opacity="0.9"/>';
+      s+='<circle cx="'+ep2.x.toFixed(1)+'" cy="'+ep2.y.toFixed(1)+'" r="5" fill="#1A3C2B" stroke="#fff" stroke-width="1.5" data-lnpt="'+li+'_'+(ln.pts.length-1)+'" style="cursor:grab" opacity="0.9"/>';
+    }
+  }
+  return s;
+}
+
+function playerColor(side){
+  // New color scheme
+  if(side==='wr') return '#cc0000';   // Red - WR
+  if(side==='rb') return '#22862a';   // Green - RB/FB
+  if(side==='te') return '#d4a017';   // Yellow/Gold - TE
+  if(side==='qb') return '#222222';   // Black outline - QB
+  if(side==='ol') return '#222222';   // Black outline - OL
+  if(side==='c')  return '#222222';   // Black outline - Center
+  if(side==='dl') return '#0055cc';
+  if(side==='lb') return '#0055cc';
+  if(side==='db') return '#0055cc';
+  return '#666';
+}
+
+function buildPlayers(players,asgn,sel,prefix,isDef,customLabels,routePtsMap){
+  var s='';var keys=Object.keys(players);
+  var cl=customLabels||{};
+  var rpm=routePtsMap||{};
+
+  // Routes first (underneath)
+  if(!isDef){
+    for(var ri=0;ri<keys.length;ri++){
+      var rk2=keys[ri],rp=players[rk2],ra=asgn[rk2];
+      if(!ra||!ROUTES[ra])continue;
+      var rt=ROUTES[ra];
+      var isRight=rp.x>CX;
+      var pts=(rpm[rk2]&&rpm[rk2].length>=2)?rpm[rk2]:routePath(ra,rp.x,rp.y,isRight);
+      if(pts.length<2)continue;
+      var d='M '+pts[0].x+' '+pts[0].y;
+      for(var j=1;j<pts.length;j++)d+=' L '+pts[j].x+' '+pts[j].y;
+      var isMot=rt.t==='motion',isBlk=rt.t==='block';
+      var isPassPro=(ra==='bpass');
+      var dash=isMot?' stroke-dasharray="6,4"':(isPassPro?' stroke-dasharray="4,3"':'');
+      var sw=isBlk?2.5:2;
+      s+='<path d="'+d+'" fill="none" stroke="'+rt.c+'" stroke-width="'+sw+'" stroke-linecap="round" stroke-linejoin="round"'+dash+' data-route="'+rk2+'"/>';
+      var ep=pts[pts.length-1];
+      if(!isBlk){
+        // Arrow head for routes
+        if(pts.length>=2){
+          var lp=pts[pts.length-2];
+          var ang=Math.atan2(ep.y-lp.y,ep.x-lp.x);
+          var ax1=ep.x-8*Math.cos(ang-0.4),ay1=ep.y-8*Math.sin(ang-0.4);
+          var ax2=ep.x-8*Math.cos(ang+0.4),ay2=ep.y-8*Math.sin(ang+0.4);
+          s+='<polygon points="'+ep.x+','+ep.y+' '+ax1+','+ay1+' '+ax2+','+ay2+'" fill="'+rt.c+'"/>';
+        }
+      } else {
+        // Blocking endpoint: flat perpendicular cap for all
+        if(pts.length>=2){
+          var lp2=pts[pts.length-2];
+          var ang2=Math.atan2(ep.y-lp2.y,ep.x-lp2.x);
+          var px1=ep.x+7*Math.cos(ang2+1.57),py1=ep.y+7*Math.sin(ang2+1.57);
+          var px2=ep.x+7*Math.cos(ang2-1.57),py2=ep.y+7*Math.sin(ang2-1.57);
+          s+='<line x1="'+px1+'" y1="'+py1+'" x2="'+px2+'" y2="'+py2+'" stroke="'+rt.c+'" stroke-width="2.5" stroke-linecap="round"/>';
+        }
+      }
+    }
+  }
+
+  // Player shapes
+  for(var pi=0;pi<keys.length;pi++){
+    var pk=keys[pi],pp=players[pk];
+    var isSel=(sel===pk&&((isDef&&selSide==='def')||(!isDef&&selSide==='off')));
+    var col=playerColor(pp.side);
+    var dp=prefix+pk;
+    var R=11; // circle radius
+    var lbl=cl[pk]||pp.l; // custom label or default
+    var fs=lbl.length>2?8:lbl.length>1?9:10; // auto font size
+
+    if(isDef){
+      // Defense: text only - just the letter, no shapes
+      var defCol=isSel?'#1A3C2B':'#222222';
+      var dfs=lbl.length>2?14:18;
+      s+='<rect x="'+(pp.x-14)+'" y="'+(pp.y-10)+'" width="28" height="20" fill="transparent" data-dp="'+dp+'" style="cursor:pointer"/>';
+      s+='<text x="'+pp.x+'" y="'+(pp.y+5)+'" text-anchor="middle" fill="'+defCol+'" font-size="'+dfs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';
+    } else if(pp.side==='c'){
+      // CENTER: black outline square, no letter, white fill
+      var sz=11;
+      s+='<rect x="'+(pp.x-sz)+'" y="'+(pp.y-sz)+'" width="'+(sz*2)+'" height="'+(sz*2)+'" rx="1" fill="'+(isSel?'#1A3C2B':'#fff')+'" stroke="'+(isSel?'#1A3C2B':'#222')+'" stroke-width="2" data-dp="'+dp+'" style="cursor:pointer"/>';
+      if(cl[pk]){s+='<text x="'+pp.x+'" y="'+(pp.y+3)+'" text-anchor="middle" fill="'+(isSel?'#fff':'#222')+'" font-size="'+fs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';}
+    } else if(pp.side==='ol'){
+      // OL: black outline circle, no letter unless custom
+      s+='<circle cx="'+pp.x+'" cy="'+pp.y+'" r="'+R+'" fill="'+(isSel?'#1A3C2B':'#fff')+'" stroke="'+(isSel?'#1A3C2B':'#222')+'" stroke-width="2" data-dp="'+dp+'" style="cursor:pointer"/>';
+      if(cl[pk]){s+='<text x="'+pp.x+'" y="'+(pp.y+3)+'" text-anchor="middle" fill="'+(isSel?'#fff':'#222')+'" font-size="'+fs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';}
+    } else if(pp.side==='qb'){
+      // QB: black outline circle with label
+      var qlbl=cl[pk]||'Q';
+      var qfs=qlbl.length>2?8:qlbl.length>1?10:12;
+      s+='<circle cx="'+pp.x+'" cy="'+pp.y+'" r="'+R+'" fill="'+(isSel?'#1A3C2B':'#fff')+'" stroke="'+(isSel?'#1A3C2B':'#222')+'" stroke-width="2" data-dp="'+dp+'" style="cursor:pointer"/>';
+      s+='<text x="'+pp.x+'" y="'+(pp.y+4)+'" text-anchor="middle" fill="'+(isSel?'#fff':'#222')+'" font-size="'+qfs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+qlbl+'</text>';
+    } else if(pp.side==='wr'){
+      s+='<circle cx="'+pp.x+'" cy="'+pp.y+'" r="'+R+'" fill="'+(isSel?'#1A3C2B':'#cc0000')+'" stroke="'+(isSel?'#1A3C2B':'#990000')+'" stroke-width="1.5" data-dp="'+dp+'" style="cursor:pointer"/>';
+      s+='<text x="'+pp.x+'" y="'+(pp.y+4)+'" text-anchor="middle" fill="#fff" font-size="'+fs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';
+    } else if(pp.side==='rb'){
+      s+='<circle cx="'+pp.x+'" cy="'+pp.y+'" r="'+R+'" fill="'+(isSel?'#1A3C2B':'#22862a')+'" stroke="'+(isSel?'#1A3C2B':'#1a6b21')+'" stroke-width="1.5" data-dp="'+dp+'" style="cursor:pointer"/>';
+      s+='<text x="'+pp.x+'" y="'+(pp.y+4)+'" text-anchor="middle" fill="#fff" font-size="'+fs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';
+    } else if(pp.side==='te'){
+      s+='<circle cx="'+pp.x+'" cy="'+pp.y+'" r="'+R+'" fill="'+(isSel?'#1A3C2B':'#d4a017')+'" stroke="'+(isSel?'#1A3C2B':'#b8860b')+'" stroke-width="1.5" data-dp="'+dp+'" style="cursor:pointer"/>';
+      s+='<text x="'+pp.x+'" y="'+(pp.y+4)+'" text-anchor="middle" fill="#fff" font-size="'+fs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';
+    } else {
+      s+='<circle cx="'+pp.x+'" cy="'+pp.y+'" r="'+R+'" fill="'+(isSel?'#1A3C2B':'#888')+'" stroke="'+(isSel?'#1A3C2B':'#666')+'" stroke-width="1.5" data-dp="'+dp+'" style="cursor:pointer"/>';
+      s+='<text x="'+pp.x+'" y="'+(pp.y+4)+'" text-anchor="middle" fill="#fff" font-size="'+fs+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+lbl+'</text>';
+    }
+  }
+  return s;
+}
+
+// ===== WAYPOINT HANDLES =====
+function buildWaypointHandles(card,oPlayers){
+  if(!selPlayer||selSide!=='off')return '';
+  var ra=card.asgn[selPlayer];
+  if(!ra||!ROUTES[ra])return '';
+  var pts=card.routePts[selPlayer];
+  if(!pts||pts.length<2)return '';
+  var s='';
+  // Waypoint drag handles (skip index 0 = player position)
+  for(var i=1;i<pts.length;i++){
+    s+='<circle cx="'+pts[i].x.toFixed(1)+'" cy="'+pts[i].y.toFixed(1)+'" r="5" fill="#1A3C2B" stroke="#fff" stroke-width="1.5" data-wp="'+selPlayer+'_'+i+'" style="cursor:grab" opacity="0.9"/>';
+  }
+  // Midpoint circles for adding waypoints
+  for(var j=0;j<pts.length-1;j++){
+    var mx=(pts[j].x+pts[j+1].x)/2;
+    var my=(pts[j].y+pts[j+1].y)/2;
+    s+='<circle cx="'+mx.toFixed(1)+'" cy="'+my.toFixed(1)+'" r="4" fill="rgba(26,60,43,0.3)" stroke="#1A3C2B" stroke-width="1" data-wpadd="'+selPlayer+'_'+j+'" style="cursor:copy" opacity="0.6"/>';
+  }
+  return s;
+}
+
+// ===== TEXT BOXES =====
+function buildTextBoxes(card){
+  var s='';
+  if(!card.textBoxes)return s;
+  for(var i=0;i<card.textBoxes.length;i++){
+    var tb=card.textBoxes[i];
+    if(!tb.text)continue;
+    var isSel=(selTextBox===i);
+    var col=tb.color||'#222';
+    var sz=tb.size||12;
+    var tw=Math.max(40,tb.text.length*(sz*0.6));
+    // Background rect for drag target
+    s+='<rect x="'+(tb.x-tw/2-4)+'" y="'+(tb.y-sz-2)+'" width="'+(tw+8)+'" height="'+(sz+8)+'" fill="'+(isSel?'rgba(26,60,43,0.08)':'transparent')+'" stroke="'+(isSel?'#1A3C2B':'none')+'" stroke-width="'+(isSel?'1':'0')+'" stroke-dasharray="'+(isSel?'3,2':'')+'" rx="3" data-tb="'+i+'" style="cursor:move"/>';
+    s+='<text x="'+tb.x+'" y="'+(tb.y)+'" text-anchor="middle" fill="'+col+'" font-size="'+sz+'" font-family="Arial,sans-serif" font-weight="bold" pointer-events="none">'+esc(tb.text)+'</text>';
+  }
+  return s;
+}
+
+// ===== RENDER =====
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+function render(){
+  var card=cards[activeIdx];
+  var oPlayers=getOffPlayers(card);
+  var dPlayers=getDefPlayers(card);
+  var h='';
+
+  // Topbar
+  h+='<div class="topbar"><div class="brand">';
+  h+='<div class="logo-mark"><svg viewBox="0 0 24 24" fill="none" stroke="#F7F7F5" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></div>';
+  h+='<div><span>Scout Cards</span><div class="sub">Game Prep System</div></div></div>';
+  h+='<input class="game-input" type="text" id="gtI" value="'+esc(gameTitle)+'" placeholder="Game / Week Title"/>';
+  h+='<div class="right"><span class="count">'+cards.length+' card'+(cards.length!==1?'s':'')+'</span>';
+  h+='<button class="btn btn-sec" id="btnSv">&#x1F4BE; Save</button>';
+  h+='<button class="btn btn-sec" id="btnLd">&#x1F4C2; Load</button>';
+  h+='<button class="btn btn-pri" id="btnExportPDF">&#x1F4C4; Export PDF</button>';
+  h+='<button class="btn btn-pri" id="btnExportPNG">&#x1F5BC; Export PNG</button>';
+  h+='<select id="gridSel" class="sel">';
+  h+='<option value="">Grid Export</option><option value="2">2-up</option><option value="4">4-up</option><option value="6">6-up</option>';
+  h+='</select>';
+  h+='</div></div>';
+
+  h+='<div class="layout">';
+
+  // Sidebar
+  h+='<aside class="sidebar"><div class="btns">';
+  h+='<button class="btn btn-add" id="btnA">+ New</button>';
+  h+='<button class="btn btn-sec" id="btnD" title="Duplicate">&#x29C9;</button>';
+  h+='<button class="script-toggle'+(scriptMode?' on':'')+'" id="btnScript">&#x1F4CB; Script</button>';
+  h+='</div>';
+
+  if(scriptMode){
+    // Practice Script Builder view
+    h+='<div style="margin-bottom:6px"><div class="script-add">';
+    h+='<select id="scriptPeriod">';
+    for(var spi=0;spi<PERIODS.length;spi++){h+='<option value="'+PERIODS[spi]+'">'+PERIODS[spi]+'</option>'}
+    h+='</select>';
+    h+='<button class="btn btn-add" id="btnAddScript" style="font-size:10px;padding:4px 8px">+ Add</button>';
+    h+='</div></div>';
+    var curPeriod='';
+    for(var si=0;si<practiceScript.length;si++){
+      var item=practiceScript[si];
+      var sc=null;for(var sci=0;sci<cards.length;sci++){if(cards[sci].id===item.cardId){sc=cards[sci];break}}
+      if(!sc)continue;
+      if(item.period!==curPeriod){curPeriod=item.period;h+='<div class="script-period">'+esc(curPeriod)+'</div>'}
+      h+='<div class="script-item" data-si="'+si+'" draggable="true">';
+      h+='<span class="script-num">'+(si+1)+'</span>';
+      h+='<span class="script-play">'+esc(sc.play||'Unnamed')+'</span>';
+      h+='<button class="btn-del" data-sdel="'+si+'">&#x2715;</button>';
+      h+='</div>';
+    }
+    if(practiceScript.length>0){
+      h+='<button class="btn btn-pri" id="btnPrintScript" style="margin-top:10px;width:100%;font-size:11px">&#x1F5A8; Print Script</button>';
+    }
+  } else {
+    // Tag filter bar
+    h+='<div class="tag-filter">';
+    h+='<button class="tf-btn'+(activeTagFilter===null?' tf-on':'')+'" data-tf="all">All</button>';
+    for(var tfi=0;tfi<TAG_OPTIONS.length;tfi++){
+      h+='<button class="tf-btn'+(activeTagFilter===TAG_OPTIONS[tfi]?' tf-on':'')+'" data-tf="'+TAG_OPTIONS[tfi]+'">'+TAG_OPTIONS[tfi]+'</button>';
+    }
+    h+='</div>';
+
+    // Card list
+    for(var ci=0;ci<cards.length;ci++){
+      var cc=cards[ci];var cfm=FORMATIONS[cc.fk];
+      // Filter by tag
+      if(activeTagFilter && (!cc.tags || cc.tags.indexOf(activeTagFilter)<0)) continue;
+      h+='<button class="ci'+(ci===activeIdx?' act':'')+'" data-ci="'+ci+'">';
+      h+='<span class="cn">#'+(ci+1)+'</span> ';
+      h+='<span class="card-name">'+(esc(cc.play)||'Unnamed')+'</span>';
+      h+='<span class="cm">'+(cfm?cfm.name:'')+' &middot; '+cc.hash+(cc.dd?' &middot; '+esc(cc.dd):'')+'</span>';
+      if(cc.tags&&cc.tags.length){
+        h+='<span class="tag-pills">';
+        for(var tpi=0;tpi<cc.tags.length;tpi++){h+='<span class="tag-pill">'+cc.tags[tpi]+'</span>'}
+        h+='</span>';
+      }
+      h+='</button>';
+    }
+  }
+  h+='</aside>';
+
+  // Main
+  h+='<main class="main"><div class="editor">';
+
+  // Header
+  h+='<div class="eh">';
+  h+='<span class="cnum">#'+(activeIdx+1)+'</span>';
+  h+='<select id="hSel"><option value="M"'+(card.hash==='M'?' selected':'')+'>Middle</option><option value="L"'+(card.hash==='L'?' selected':'')+'>Left Hash</option><option value="R"'+(card.hash==='R'?' selected':'')+'>Right Hash</option><option value="LM"'+(card.hash==='LM'?' selected':'')+'>Left Middle</option><option value="RM"'+(card.hash==='RM'?' selected':'')+'>Right Middle</option></select>';
+  h+='<input class="pn" type="text" id="pI" placeholder="Play Name..." value="'+esc(card.play)+'"/>';
+  h+='<input class="dd" type="text" id="dI" placeholder="D&D" value="'+esc(card.dd)+'"/>';
+  h+='<button class="flip-btn'+(card.mir?' on':'')+'" id="bFlip">&#x2194; Flip</button>';
+  // Tag toggles
+  h+='<div class="tag-row">';
+  for(var tti=0;tti<TAG_OPTIONS.length;tti++){
+    var tg=TAG_OPTIONS[tti];
+    var tgOn=card.tags&&card.tags.indexOf(tg)>=0;
+    h+='<button class="tag-btn'+(tgOn?' tag-on':'')+'" data-tag="'+tg+'">'+tg+'</button>';
+  }
+  h+='</div>';
+  h+='<select id="fSel">';
+  var fks=Object.keys(FORMATIONS);for(var fi=0;fi<fks.length;fi++){h+='<option value="'+fks[fi]+'"'+(card.fk===fks[fi]?' selected':'')+'>'+FORMATIONS[fks[fi]].name+'</option>'}
+  h+='</select>';
+  h+='<select id="dfSel">';
+  var dks=Object.keys(DEF_FRONTS);for(var di=0;di<dks.length;di++){h+='<option value="'+dks[di]+'"'+(card.dfk===dks[di]?' selected':'')+'>'+DEF_FRONTS[dks[di]].name+'</option>'}
+  h+='</select>';
+  h+='<button class="btn-del" id="bDel">&#x2715;</button>';
+  h+='</div>';
+
+  // Body - draw toolbar first, then content
+  // Draw toolbar
+  h+='<div class="draw-bar">';
+  // Pen toggle
+  h+='<button class="tb'+(drawMode&&!eraserMode?' on':'')+'" id="tbPen"><svg viewBox="0 0 24 24"><path d="M17 3a2.83 2.83 0 0 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"/></svg>Pen</button>';
+  // Eraser toggle
+  h+='<button class="tb'+(eraserMode?' eraser-on':'')+'" id="tbErase"><svg viewBox="0 0 24 24"><path d="M20 20H7L3 16l9-9 8 8-4 4"/><path d="M6.5 13.5l5-5"/></svg>Eraser</button>';
+  h+='<button class="tb'+(textMode?' text-on':'')+'" id="tbText"><svg viewBox="0 0 24 24"><path d="M4 7V4h16v3"/><path d="M9 20h6"/><path d="M12 4v16"/></svg>Text</button>';
+  h+='<div class="sep"></div>';
+  // Line style
+  h+='<select id="dStyle">';
+  h+='<option value="solid"'+(drawStyle==='solid'?' selected':'')+'>Solid</option>';
+  h+='<option value="dashed"'+(drawStyle==='dashed'?' selected':'')+'>Dashed</option>';
+  h+='<option value="arrow"'+(drawStyle==='arrow'?' selected':'')+'>Arrow</option>';
+  h+='<option value="curved"'+(drawStyle==='curved'?' selected':'')+'>Curved</option>';
+  h+='<option value="curvedarrow"'+(drawStyle==='curvedarrow'?' selected':'')+'>Curved Arrow</option>';
+  h+='<option value="block"'+(drawStyle==='block'?' selected':'')+'>Block</option>';
+  h+='<option value="curvedblock"'+(drawStyle==='curvedblock'?' selected':'')+'>Curved Block</option>';
+  h+='</select>';
+  h+='<div class="sep"></div>';
+  // Colors
+  for(var dci=0;dci<DRAW_COLORS.length;dci++){
+    var dc=DRAW_COLORS[dci];
+    h+='<button class="color-btn'+(drawColor===dc?' act':'')+'" data-dc="'+dc+'" style="background:'+dc+'"></button>';
+  }
+  h+='<div class="sep"></div>';
+  // Widths
+  for(var dwi=0;dwi<DRAW_WIDTHS.length;dwi++){
+    var dw=DRAW_WIDTHS[dwi];
+    h+='<button class="width-btn'+(drawWidth===dw?' act':'')+'" data-dw="'+dw+'"><span style="width:'+(4+dwi*4)+'px;height:'+(2+dwi*2)+'px"></span></button>';
+  }
+  h+='<div class="sep"></div>';
+  // Undo / Clear
+  h+='<button class="tb" id="tbUndo"><svg viewBox="0 0 24 24"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>Undo</button>';
+  h+='<button class="tb" id="tbClear" style="color:#ef4444"><svg viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>Clear All</button>';
+  h+='</div>';
+
+  h+='<div class="eb">';
+
+  // Field SVG
+  var svgClass=drawMode?'drawing':(textMode?'text-mode':'');
+  h+='<div class="field-wrap"><svg viewBox="0 0 '+FW+' '+FH+'" id="fSvg"'+(svgClass?' class="'+svgClass+'"':'')+'>';
+  h+=buildField();
+  h+=buildDrawnLines(card.lines||[]);
+  h+=buildPlayers(dPlayers,{},selSide==='def'?selPlayer:null,'d_',true,card.cl);
+  h+=buildPlayers(oPlayers,card.asgn,selSide==='off'?selPlayer:null,'o_',false,card.cl,card.routePts);
+  h+=buildTextLabels(card);
+  h+=buildTextBoxes(card);
+  h+=buildWaypointHandles(card,oPlayers);
+  h+='</svg></div>';
+
+  // Right panel
+  h+='<div class="rp">';
+  if(selTextBox!==null&&card.textBoxes&&card.textBoxes[selTextBox]){
+    var stb=card.textBoxes[selTextBox];
+    h+='<div class="sel-hdr"><span style="color:#3b82f6">Text Box</span>';
+    h+='<button class="clr-btn" id="btnDelTB">Delete</button></div>';
+    h+='<div class="ns" style="margin-top:0;padding-top:0;border:none"><label>Color</label>';
+    h+='<select id="tbColorSel" style="width:100%">';
+    var tbColors=[['#222','Black'],['#cc0000','Red'],['#0055cc','Blue'],['#22862a','Green'],['#9333ea','Purple'],['#1A3C2B','Forest'],['#888','Gray']];
+    for(var tci=0;tci<tbColors.length;tci++){h+='<option value="'+tbColors[tci][0]+'"'+(stb.color===tbColors[tci][0]?' selected':'')+'>'+tbColors[tci][1]+'</option>'}
+    h+='</select></div>';
+    h+='<div class="ns"><label>Size</label>';
+    h+='<select id="tbSizeSel" style="width:100%">';
+    var tbSizes=[8,10,12,14,16,20];
+    for(var tsi=0;tsi<tbSizes.length;tsi++){h+='<option value="'+tbSizes[tsi]+'"'+(stb.size===tbSizes[tsi]?' selected':'')+'>'+tbSizes[tsi]+'px</option>'}
+    h+='</select></div>';
+    h+='<div class="np" style="padding:8px 0;font-size:10px;color:#6b6560">Double-click to edit text. Drag to move.</div>';
+  } else if(!selPlayer){
+    h+='<div class="np">Click a player to assign a route or drag to reposition</div>';
+  } else if(selSide==='off') {
+    var pl=oPlayers[selPlayer];
+    var curLabel=card.cl[selPlayer]||pl.l;
+    h+='<div class="sel-hdr"><span>'+curLabel+' — Route</span>';
+    if(card.asgn[selPlayer])h+='<button class="clr-btn" id="bClr">Clear</button>';
+    h+='</div>';
+    h+='<div class="ns" style="margin-top:0;padding-top:0;border:none"><label>Player Label</label>';
+    h+='<input type="text" id="clI" placeholder="e.g. 7, WR1, etc" value="'+esc(card.cl[selPlayer]||'')+'" maxlength="4" style="width:80px"/></div>';
+    var gk=Object.keys(RGROUPS);
+    for(var gi=0;gi<gk.length;gi++){
+      h+='<div class="rp-title">'+gk[gi]+'</div><div class="rp-wrap">';
+      var rks=RGROUPS[gk[gi]];
+      for(var rii=0;rii<rks.length;rii++){
+        var rkk=rks[rii],rr=ROUTES[rkk],isA=card.asgn[selPlayer]===rkk;
+        h+='<button class="rb" data-rk="'+rkk+'" style="background:'+(isA?rr.c:rr.c+'18')+';color:'+(isA?'#fff':rr.c)+';border-color:'+rr.c+'44;'+(isA?'font-weight:700':'')+'">'+rr.n+'</button>';
+      }
+      h+='</div>';
+    }
+    h+='<div class="ns"><label>Note for '+(pl?pl.l:'')+'</label>';
+    h+='<input type="text" id="pnI" placeholder="e.g. #4 - burns corner" value="'+esc(card.pn[selPlayer]||'')+'"/></div>';
+  } else {
+    var dpl=dPlayers[selPlayer];
+    var curDLabel=card.cl[selPlayer]||dpl.l;
+    h+='<div class="sel-hdr"><span style="color:#3b82f6">'+curDLabel+' — Defense</span></div>';
+    h+='<div class="ns" style="margin-top:0;padding-top:0;border:none"><label>Player Label</label>';
+    h+='<input type="text" id="clI" placeholder="e.g. 55, MLB" value="'+esc(card.cl[selPlayer]||'')+'" maxlength="4" style="width:80px"/></div>';
+    h+='<div class="np" style="padding:12px 0;font-size:11px">Drag to reposition defender</div>';
+  }
+
+  h+='<div class="ns"><label>Card Notes</label>';
+  h+='<textarea id="nI" placeholder="Tendency notes...">'+esc(card.notes)+'</textarea></div>';
+
+  // Defensive front selector
+  h+='<div class="front-sel"><label>Defensive Front</label>';
+  h+='<select id="dfSel2">';
+  for(var di2=0;di2<dks.length;di2++){h+='<option value="'+dks[di2]+'"'+(card.dfk===dks[di2]?' selected':'')+'>'+DEF_FRONTS[dks[di2]].name+'</option>'}
+  h+='</select></div>';
+
+  // === PRESET: Save/Load Offensive Formation ===
+  h+='<div class="preset-section"><label>&#x1F4BE; Offensive Formation Presets</label>';
+  for(var opi=0;opi<offPresets.length;opi++){
+    h+='<div class="preset-row">';
+    h+='<button class="btn btn-sec" data-loadoff="'+opi+'">'+esc(offPresets[opi].name)+'</button>';
+    h+='<button class="btn btn-x" data-deloff="'+opi+'">&#x2715;</button>';
+    h+='</div>';
+  }
+  h+='<div class="save-preset-row">';
+  h+='<input type="text" id="offPName" placeholder="Preset name..."/>';
+  h+='<button class="btn btn-pri" id="btnSaveOff">Save</button>';
+  h+='</div></div>';
+
+  // === PRESET: Save/Load Defensive Front ===
+  h+='<div class="preset-section"><label>&#x1F4BE; Defensive Front Presets</label>';
+  for(var dpi=0;dpi<defPresets.length;dpi++){
+    h+='<div class="preset-row">';
+    h+='<button class="btn btn-sec" data-loaddef="'+dpi+'">'+esc(defPresets[dpi].name)+'</button>';
+    h+='<button class="btn btn-x" data-deldef="'+dpi+'">&#x2715;</button>';
+    h+='</div>';
+  }
+  h+='<div class="save-preset-row">';
+  h+='<input type="text" id="defPName" placeholder="Preset name..."/>';
+  h+='<button class="btn btn-pri" id="btnSaveDef">Save</button>';
+  h+='</div></div>';
+
+  // === PRESET: Save/Load Route Combo ===
+  h+='<div class="preset-section"><label>&#x1F4BE; Route / Assignment Presets</label>';
+  for(var rpi=0;rpi<routePresets.length;rpi++){
+    h+='<div class="preset-row">';
+    h+='<button class="btn btn-sec" data-loadroute="'+rpi+'">'+esc(routePresets[rpi].name)+'</button>';
+    h+='<button class="btn btn-x" data-delroute="'+rpi+'">&#x2715;</button>';
+    h+='</div>';
+  }
+  h+='<div class="save-preset-row">';
+  h+='<input type="text" id="routePName" placeholder="Preset name..."/>';
+  h+='<button class="btn btn-pri" id="btnSaveRoute">Save</button>';
+  h+='</div></div>';
+
+  h+='</div>'; // rp
+  h+='</div>'; // eb
+  h+='</div></main>'; // editor, main
+  h+='</div>'; // layout
+
+  document.getElementById('app').innerHTML=h;
+  bind();
+}
+
+function bind(){
+  var card=cards[activeIdx];
+
+  // Sidebar
+  var cis=document.querySelectorAll('.ci');
+  for(var i=0;i<cis.length;i++){
+    cis[i].addEventListener('click',(function(idx){return function(){activeIdx=idx;selPlayer=null;render()}})(parseInt(cis[i].getAttribute('data-ci'))));
+  }
+
+  // SVG interactions
+  var svg=document.getElementById('fSvg');
+  if(svg){
+    svg.addEventListener('mousedown',function(e){
+      // Text mode: click to create text box
+      if(textMode){
+        var pt=svgPoint(svg,e);
+        // Check if clicking existing text box
+        var tgt=e.target;
+        var tbAttr=tgt.getAttribute&&tgt.getAttribute('data-tb');
+        if(tbAttr!==null&&tbAttr!==undefined){
+          selTextBox=parseInt(tbAttr);selPlayer=null;
+          var pt2=svgPoint(svg,e);
+          var tb=card.textBoxes[selTextBox];
+          dragInfo={isTextBox:true,idx:selTextBox,offX:pt2.x-tb.x,offY:pt2.y-tb.y,moved:false};
+          render();bindDrag();
+          e.preventDefault();return;
+        }
+        var txt=prompt('Enter text:');
+        if(txt){
+          if(!card.textBoxes)card.textBoxes=[];
+          card.textBoxes.push({id:tbNid++,x:pt.x,y:pt.y,text:txt,color:'#222',size:12});
+          selTextBox=card.textBoxes.length-1;selPlayer=null;
+          render();
+        }
+        e.preventDefault();return;
+      }
+      // Line endpoint drag handle
+      var lnptAttr=e.target.getAttribute&&e.target.getAttribute('data-lnpt');
+      if(lnptAttr){
+        var lnParts=lnptAttr.split('_');
+        var lnIdx=parseInt(lnParts[0]);
+        var ptIdx=parseInt(lnParts[1]);
+        var pt=svgPoint(svg,e);
+        var lnPts=card.lines[lnIdx].pts;
+        if(lnPts&&lnPts[ptIdx]){
+          dragInfo={isLinePt:true,lineIdx:lnIdx,ptIdx:ptIdx,offX:pt.x-lnPts[ptIdx].x,offY:pt.y-lnPts[ptIdx].y,moved:false};
+          e.preventDefault();bindDrag();return;
+        }
+      }
+      // Click line to select it (via invisible hit area)
+      var lineSelAttr=e.target.getAttribute&&e.target.getAttribute('data-linesel');
+      if(lineSelAttr!==null&&lineSelAttr!==undefined&&!drawMode&&!eraserMode){
+        selLine=parseInt(lineSelAttr);selPlayer=null;selTextBox=null;
+        render();e.preventDefault();return;
+      }
+      // Drawing/eraser mode
+      if(drawMode||eraserMode){
+        if(drawMode&&!eraserMode){
+          selLine=null;
+          var pt=svgPoint(svg,e);
+          currentLine={pts:[{x:pt.x,y:pt.y}],color:drawColor,width:drawWidth,style:drawStyle};
+          e.preventDefault();
+          return;
+        } else if(eraserMode){
+          var tgt=e.target;
+          var li=tgt.getAttribute&&tgt.getAttribute('data-line');
+          if(li!==null&&li!==undefined){
+            var idx=parseInt(li);
+            var cc=cards[activeIdx];
+            if(cc.lines&&cc.lines[idx]!==undefined){
+              pushUndo();
+              cc.lines.splice(idx,1);
+              selLine=null;
+              render();
+            }
+          }
+          e.preventDefault();
+          return;
+        }
+      }
+
+      // Check for waypoint handle click
+      var tgt2=e.target;
+      var wpAttr=tgt2.getAttribute&&tgt2.getAttribute('data-wp');
+      if(wpAttr){
+        var parts=wpAttr.split('_');
+        var wpIdx=parseInt(parts[parts.length-1]);
+        var wpPlayer=parts.slice(0,-1).join('_');
+        var pt=svgPoint(svg,e);
+        var wpPts=card.routePts[wpPlayer];
+        if(wpPts&&wpPts[wpIdx]){
+          dragInfo={isWaypoint:true,player:wpPlayer,wpIdx:wpIdx,offX:pt.x-wpPts[wpIdx].x,offY:pt.y-wpPts[wpIdx].y,moved:false};
+          e.preventDefault();bindDrag();return;
+        }
+      }
+      // Check for add-waypoint midpoint click
+      var wpAddAttr=tgt2.getAttribute&&tgt2.getAttribute('data-wpadd');
+      if(wpAddAttr){
+        var parts2=wpAddAttr.split('_');
+        var segIdx=parseInt(parts2[parts2.length-1]);
+        var wpPlayer2=parts2.slice(0,-1).join('_');
+        var wpPts2=card.routePts[wpPlayer2];
+        if(wpPts2&&wpPts2[segIdx]!==undefined&&wpPts2[segIdx+1]!==undefined){
+          var mx=(wpPts2[segIdx].x+wpPts2[segIdx+1].x)/2;
+          var my=(wpPts2[segIdx].y+wpPts2[segIdx+1].y)/2;
+          wpPts2.splice(segIdx+1,0,{x:mx,y:my});
+          render();
+        }
+        e.preventDefault();return;
+      }
+      // Check for text box click
+      var tbAttr2=tgt2.getAttribute&&tgt2.getAttribute('data-tb');
+      if(tbAttr2!==null&&tbAttr2!==undefined){
+        selTextBox=parseInt(tbAttr2);selPlayer=null;
+        var pt3=svgPoint(svg,e);
+        var tb2=card.textBoxes[selTextBox];
+        dragInfo={isTextBox:true,idx:selTextBox,offX:pt3.x-tb2.x,offY:pt3.y-tb2.y,moved:false};
+        render();bindDrag();
+        e.preventDefault();return;
+      }
+
+      // Normal player select/drag
+      selTextBox=null;
+      selLine=null;
+      var el=findPlayerEl(e.target);
+      if(el){
+        var dp=el.getAttribute('data-dp');
+
+        // Text label drag (play name, D&D, notes, player notes)
+        if(dp.indexOf('t_')===0){
+          var labelKey=dp.substring(2); // 'play', 'dd', 'notes', 'pn_X', etc
+          var pt2=svgPoint(svg,e);
+          var curCard2=cards[activeIdx];
+          if(!curCard2.lpos)curCard2.lpos={};
+          var defaults={play:{x:100,y:18},dd:{x:FW-100,y:18},notes:{x:CX,y:LOS_Y*0.5}};
+          var curPos=curCard2.lpos[labelKey]||defaults[labelKey]||{x:pt2.x,y:pt2.y};
+          pushUndo();dragInfo={key:labelKey,isLabel:true,offX:pt2.x-curPos.x,offY:pt2.y-curPos.y,moved:false};
+          e.preventDefault();
+          bindDrag();
+          return;
+        }
+
+        var isDef=dp.indexOf('d_')===0;
+        var pk=dp.replace(/^[od]_/,'');
+        selPlayer=pk;
+        selSide=isDef?'def':'off';
+
+        // Start drag
+        var pt=svgPoint(svg,e);
+        var curCard=cards[activeIdx];
+        var players=isDef?getDefPlayers(curCard):getOffPlayers(curCard);
+        var pp=players[pk];
+        if(pp){
+          pushUndo();dragInfo={key:pk,isDef:isDef,offX:pt.x-pp.x,offY:pt.y-pp.y,moved:false};
+        }
+        render();
+        // Rebind after render
+        bindDrag();
+        e.preventDefault();
+      }
+    });
+  }
+
+  bindDrag();
+  bindDraw();
+
+  // Draw toolbar buttons
+  var tbPen=document.getElementById('tbPen');
+  if(tbPen)tbPen.addEventListener('click',function(){
+    if(drawMode&&!eraserMode){drawMode=false}else{drawMode=true;eraserMode=false;textMode=false}
+    selPlayer=null;selTextBox=null;render();
+  });
+  var tbErase=document.getElementById('tbErase');
+  if(tbErase)tbErase.addEventListener('click',function(){
+    if(eraserMode){eraserMode=false;drawMode=false}else{eraserMode=true;drawMode=true;textMode=false}
+    selPlayer=null;selTextBox=null;render();
+  });
+  var tbUndo=document.getElementById('tbUndo');
+  if(tbUndo)tbUndo.addEventListener('click',function(){
+    var card=cards[activeIdx];
+    if(card.lines&&card.lines.length>0){pushUndo();card.lines.pop();render()}
+  });
+  var tbClear=document.getElementById('tbClear');
+  if(tbClear)tbClear.addEventListener('click',function(){
+    var card=cards[activeIdx];
+    if(card.lines&&card.lines.length>0){
+      if(confirm('Clear all drawn lines on this card?')){pushUndo();card.lines=[];render()}
+    }
+  });
+  var dStyleSel=document.getElementById('dStyle');
+  if(dStyleSel)dStyleSel.addEventListener('change',function(){drawStyle=this.value});
+
+  // Color buttons
+  var cbs=document.querySelectorAll('.color-btn');
+  for(var cbi=0;cbi<cbs.length;cbi++){
+    cbs[cbi].addEventListener('click',(function(c){return function(){drawColor=c;drawMode=true;eraserMode=false;render()}})(cbs[cbi].getAttribute('data-dc')));
+  }
+  // Width buttons
+  var wbs=document.querySelectorAll('.width-btn');
+  for(var wbi=0;wbi<wbs.length;wbi++){
+    wbs[wbi].addEventListener('click',(function(w){return function(){drawWidth=parseFloat(w);drawMode=true;eraserMode=false;render()}})(wbs[wbi].getAttribute('data-dw')));
+  }
+
+  // Route buttons
+  var rbs=document.querySelectorAll('.rb');
+  for(var rb=0;rb<rbs.length;rb++){
+    rbs[rb].addEventListener('click',(function(rk){return function(){if(selPlayer&&selSide==='off'){
+      pushUndo();card.asgn[selPlayer]=rk;
+      // Compute and store initial waypoints
+      var oP=getOffPlayers(card);var pp=oP[selPlayer];
+      if(pp){var isRight=pp.x>CX;card.routePts[selPlayer]=routePath(rk,pp.x,pp.y,isRight)}
+      render();
+    }}})(rbs[rb].getAttribute('data-rk')));
+  }
+
+  var bClr=document.getElementById('bClr');
+  if(bClr)bClr.addEventListener('click',function(){if(selPlayer){pushUndo();delete card.asgn[selPlayer];delete card.routePts[selPlayer];render()}});
+
+  var pI=document.getElementById('pI');if(pI)pI.addEventListener('input',function(){card.play=this.value;upSB()});
+  var dI=document.getElementById('dI');if(dI)dI.addEventListener('input',function(){card.dd=this.value;upSB()});
+  var hSel=document.getElementById('hSel');if(hSel)hSel.addEventListener('change',function(){card.hash=this.value;card.opos=null;card.dpos=null;card.routePts={};upSB();render()});
+  var nI=document.getElementById('nI');if(nI)nI.addEventListener('input',function(){card.notes=this.value});
+  var pnI=document.getElementById('pnI');if(pnI)pnI.addEventListener('input',function(){if(selPlayer)card.pn[selPlayer]=this.value});
+  var clI=document.getElementById('clI');if(clI)clI.addEventListener('input',function(){
+    if(selPlayer){
+      if(this.value){card.cl[selPlayer]=this.value}else{delete card.cl[selPlayer]}
+      render();
+      // Refocus the input after render
+      var ni=document.getElementById('clI');if(ni){ni.focus();ni.selectionStart=ni.selectionEnd=ni.value.length}
+    }
+  });
+  var gtI=document.getElementById('gtI');if(gtI)gtI.addEventListener('input',function(){gameTitle=this.value});
+
+  var fSel=document.getElementById('fSel');
+  if(fSel)fSel.addEventListener('change',function(){card.fk=this.value;card.asgn={};card.routePts={};card.opos=null;selPlayer=null;render()});
+
+  var dfSel=document.getElementById('dfSel');
+  if(dfSel)dfSel.addEventListener('change',function(){card.dfk=this.value;card.dpos=null;render()});
+  var dfSel2=document.getElementById('dfSel2');
+  if(dfSel2)dfSel2.addEventListener('change',function(){card.dfk=this.value;card.dpos=null;render()});
+
+  var bFlip=document.getElementById('bFlip');
+  if(bFlip)bFlip.addEventListener('click',function(){card.mir=!card.mir;card.opos=null;card.routePts={};render()});
+
+  var bDel=document.getElementById('bDel');
+  if(bDel)bDel.addEventListener('click',function(){
+    cards=cards.filter(function(c){return c.id!==card.id});
+    if(!cards.length)cards=[mkCard()];
+    activeIdx=Math.min(activeIdx,cards.length-1);selPlayer=null;render();
+  });
+
+  var btnA=document.getElementById('btnA');
+  if(btnA)btnA.addEventListener('click',function(){cards.push(mkCard());activeIdx=cards.length-1;selPlayer=null;render()});
+
+  var btnD=document.getElementById('btnD');
+  if(btnD)btnD.addEventListener('click',function(){
+    var src=cards[activeIdx];var d=mkCard();
+    d.fk=src.fk;d.dfk=src.dfk;d.play=src.play+' (copy)';d.hash=src.hash;d.dd=src.dd;d.notes=src.notes;d.mir=src.mir;
+    d.asgn=JSON.parse(JSON.stringify(src.asgn));d.pn=JSON.parse(JSON.stringify(src.pn));
+    if(src.opos)d.opos=JSON.parse(JSON.stringify(src.opos));
+    if(src.dpos)d.dpos=JSON.parse(JSON.stringify(src.dpos));
+    if(src.lines&&src.lines.length)d.lines=JSON.parse(JSON.stringify(src.lines));
+    if(src.lpos)d.lpos=JSON.parse(JSON.stringify(src.lpos));
+    if(src.cl&&Object.keys(src.cl).length)d.cl=JSON.parse(JSON.stringify(src.cl));
+    if(src.routePts&&Object.keys(src.routePts).length)d.routePts=JSON.parse(JSON.stringify(src.routePts));
+    if(src.textBoxes&&src.textBoxes.length)d.textBoxes=JSON.parse(JSON.stringify(src.textBoxes));
+    if(src.tags&&src.tags.length)d.tags=src.tags.slice();
+    cards.splice(activeIdx+1,0,d);activeIdx++;render();
+  });
+
+  var btnSv=document.getElementById('btnSv');
+  if(btnSv)btnSv.addEventListener('click',function(){try{localStorage.setItem('scoutCards2',JSON.stringify({t:gameTitle,c:cards}));alert('Saved!')}catch(e){alert('Save failed')}});
+
+  var btnLd=document.getElementById('btnLd');
+  if(btnLd)btnLd.addEventListener('click',function(){
+    try{var r=localStorage.getItem('scoutCards2');if(r){var d=JSON.parse(r);gameTitle=d.t||'';cards=d.c||[mkCard()];activeIdx=0;selPlayer=null;render()}else alert('No saved data')}catch(e){alert('Load failed')}
+  });
+
+  var btnPDF=document.getElementById('btnExportPDF');
+  if(btnPDF)btnPDF.addEventListener('click',function(){exportPrintView()});
+
+  var btnPNG=document.getElementById('btnExportPNG');
+  if(btnPNG)btnPNG.addEventListener('click',function(){exportPNG()});
+
+  // ===== PRESET BINDINGS =====
+  // Save Offensive Formation
+  var btnSaveOff=document.getElementById('btnSaveOff');
+  if(btnSaveOff)btnSaveOff.addEventListener('click',function(){
+    var nameEl=document.getElementById('offPName');
+    var name=nameEl?nameEl.value.trim():'';
+    if(!name){alert('Enter a preset name');return}
+    var card=cards[activeIdx];
+    // Capture current offensive positions
+    var oPlayers=getOffPlayers(card);
+    var posData={};
+    var ks=Object.keys(oPlayers);
+    for(var i=0;i<ks.length;i++){posData[ks[i]]={x:oPlayers[ks[i]].x,y:oPlayers[ks[i]].y}}
+    offPresets.push({name:name,data:{fk:card.fk,opos:posData}});
+    savePresets();render();
+  });
+
+  // Load Offensive Formation
+  var loadOffs=document.querySelectorAll('[data-loadoff]');
+  for(var loi=0;loi<loadOffs.length;loi++){
+    loadOffs[loi].addEventListener('click',(function(idx){return function(){
+      var p=offPresets[idx];if(!p)return;
+      var card=cards[activeIdx];
+      card.fk=p.data.fk;
+      card.opos=JSON.parse(JSON.stringify(p.data.opos));
+      card.mir=false;
+      selPlayer=null;render();
+    }})(parseInt(loadOffs[loi].getAttribute('data-loadoff'))));
+  }
+
+  // Delete Offensive Preset
+  var delOffs=document.querySelectorAll('[data-deloff]');
+  for(var doi=0;doi<delOffs.length;doi++){
+    delOffs[doi].addEventListener('click',(function(idx){return function(){
+      offPresets.splice(idx,1);savePresets();render();
+    }})(parseInt(delOffs[doi].getAttribute('data-deloff'))));
+  }
+
+  // Save Defensive Front
+  var btnSaveDef=document.getElementById('btnSaveDef');
+  if(btnSaveDef)btnSaveDef.addEventListener('click',function(){
+    var nameEl=document.getElementById('defPName');
+    var name=nameEl?nameEl.value.trim():'';
+    if(!name){alert('Enter a preset name');return}
+    var card=cards[activeIdx];
+    var dPlayers=getDefPlayers(card);
+    var posData={};
+    var ks=Object.keys(dPlayers);
+    for(var i=0;i<ks.length;i++){posData[ks[i]]={x:dPlayers[ks[i]].x,y:dPlayers[ks[i]].y,l:dPlayers[ks[i]].l,side:dPlayers[ks[i]].side}}
+    defPresets.push({name:name,data:{dfk:card.dfk,dpos:posData}});
+    savePresets();render();
+  });
+
+  // Load Defensive Front
+  var loadDefs=document.querySelectorAll('[data-loaddef]');
+  for(var ldi=0;ldi<loadDefs.length;ldi++){
+    loadDefs[ldi].addEventListener('click',(function(idx){return function(){
+      var p=defPresets[idx];if(!p)return;
+      var card=cards[activeIdx];
+      card.dfk=p.data.dfk;
+      card.dpos=JSON.parse(JSON.stringify(p.data.dpos));
+      selPlayer=null;render();
+    }})(parseInt(loadDefs[ldi].getAttribute('data-loaddef'))));
+  }
+
+  // Delete Defensive Preset
+  var delDefs=document.querySelectorAll('[data-deldef]');
+  for(var ddi=0;ddi<delDefs.length;ddi++){
+    delDefs[ddi].addEventListener('click',(function(idx){return function(){
+      defPresets.splice(idx,1);savePresets();render();
+    }})(parseInt(delDefs[ddi].getAttribute('data-deldef'))));
+  }
+
+  // Save Route Combo
+  var btnSaveRoute=document.getElementById('btnSaveRoute');
+  if(btnSaveRoute)btnSaveRoute.addEventListener('click',function(){
+    var nameEl=document.getElementById('routePName');
+    var name=nameEl?nameEl.value.trim():'';
+    if(!name){alert('Enter a preset name');return}
+    var card=cards[activeIdx];
+    if(!card.asgn||Object.keys(card.asgn).length===0){alert('No routes assigned to save');return}
+    routePresets.push({name:name,data:{asgn:JSON.parse(JSON.stringify(card.asgn)),routePts:JSON.parse(JSON.stringify(card.routePts||{}))}});
+    savePresets();render();
+  });
+
+  // Load Route Combo
+  var loadRoutes=document.querySelectorAll('[data-loadroute]');
+  for(var lri=0;lri<loadRoutes.length;lri++){
+    loadRoutes[lri].addEventListener('click',(function(idx){return function(){
+      var p=routePresets[idx];if(!p)return;
+      var card=cards[activeIdx];
+      card.asgn=JSON.parse(JSON.stringify(p.data.asgn));
+      if(p.data.routePts)card.routePts=JSON.parse(JSON.stringify(p.data.routePts));
+      render();
+    }})(parseInt(loadRoutes[lri].getAttribute('data-loadroute'))));
+  }
+
+  // Delete Route Preset
+  var delRoutes=document.querySelectorAll('[data-delroute]');
+  for(var dri=0;dri<delRoutes.length;dri++){
+    delRoutes[dri].addEventListener('click',(function(idx){return function(){
+      routePresets.splice(idx,1);savePresets();render();
+    }})(parseInt(delRoutes[dri].getAttribute('data-delroute'))));
+  }
+
+  // === TEXT TOOL BUTTON ===
+  var tbText=document.getElementById('tbText');
+  if(tbText)tbText.addEventListener('click',function(){
+    if(textMode){textMode=false}else{textMode=true;drawMode=false;eraserMode=false}
+    selPlayer=null;render();
+  });
+
+  // === DBLCLICK on SVG for waypoint removal & text box editing ===
+  if(svg)svg.addEventListener('dblclick',function(e){
+    var tgt=e.target;
+    // Waypoint removal
+    var wpAttr=tgt.getAttribute&&tgt.getAttribute('data-wp');
+    if(wpAttr){
+      var parts=wpAttr.split('_');
+      var wpIdx=parseInt(parts[parts.length-1]);
+      var wpPlayer=parts.slice(0,-1).join('_');
+      var wpPts=card.routePts[wpPlayer];
+      if(wpPts&&wpPts.length>2&&wpIdx>0){
+        wpPts.splice(wpIdx,1);render();
+      }
+      e.preventDefault();return;
+    }
+    // Text box editing
+    var tbAttr=tgt.getAttribute&&tgt.getAttribute('data-tb');
+    if(tbAttr!==null&&tbAttr!==undefined){
+      var idx=parseInt(tbAttr);
+      var tb=card.textBoxes[idx];
+      if(tb){
+        var newText=prompt('Edit text:',tb.text);
+        if(newText===null)return;
+        if(newText===''){card.textBoxes.splice(idx,1);selTextBox=null}
+        else{tb.text=newText}
+        render();
+      }
+      e.preventDefault();return;
+    }
+  });
+
+  // === TAG TOGGLE BUTTONS ===
+  var tagBtns=document.querySelectorAll('.tag-btn');
+  for(var tbi=0;tbi<tagBtns.length;tbi++){
+    tagBtns[tbi].addEventListener('click',(function(tag){return function(){
+      if(!card.tags)card.tags=[];
+      var idx=card.tags.indexOf(tag);
+      if(idx>=0)card.tags.splice(idx,1);
+      else card.tags.push(tag);
+      render();
+    }})(tagBtns[tbi].getAttribute('data-tag')));
+  }
+
+  // === TAG FILTER BUTTONS ===
+  var tfBtns=document.querySelectorAll('.tf-btn');
+  for(var tfi=0;tfi<tfBtns.length;tfi++){
+    tfBtns[tfi].addEventListener('click',(function(tf){return function(){
+      if(tf==='all')activeTagFilter=null;
+      else activeTagFilter=(activeTagFilter===tf)?null:tf;
+      render();
+    }})(tfBtns[tfi].getAttribute('data-tf')));
+  }
+
+  // === SCRIPT MODE TOGGLE ===
+  var btnScript=document.getElementById('btnScript');
+  if(btnScript)btnScript.addEventListener('click',function(){scriptMode=!scriptMode;render()});
+
+  // === SCRIPT: Add current card ===
+  var btnAddScript=document.getElementById('btnAddScript');
+  if(btnAddScript)btnAddScript.addEventListener('click',function(){
+    var periodSel=document.getElementById('scriptPeriod');
+    var period=periodSel?periodSel.value:PERIODS[0];
+    practiceScript.push({cardId:card.id,period:period});
+    saveScript();render();
+  });
+
+  // === SCRIPT: Delete items ===
+  var sdelBtns=document.querySelectorAll('[data-sdel]');
+  for(var sdi=0;sdi<sdelBtns.length;sdi++){
+    sdelBtns[sdi].addEventListener('click',(function(idx){return function(e){
+      e.stopPropagation();
+      practiceScript.splice(idx,1);saveScript();render();
+    }})(parseInt(sdelBtns[sdi].getAttribute('data-sdel'))));
+  }
+
+  // === SCRIPT: Drag reorder ===
+  var sitems=document.querySelectorAll('.script-item');
+  for(var sii=0;sii<sitems.length;sii++){
+    (function(el,idx){
+      el.addEventListener('dragstart',function(e){scriptDragIdx=idx;e.dataTransfer.effectAllowed='move'});
+      el.addEventListener('dragover',function(e){e.preventDefault();el.classList.add('drag-over')});
+      el.addEventListener('dragleave',function(){el.classList.remove('drag-over')});
+      el.addEventListener('drop',function(e){
+        e.preventDefault();el.classList.remove('drag-over');
+        if(scriptDragIdx!==null&&scriptDragIdx!==idx){
+          var item=practiceScript.splice(scriptDragIdx,1)[0];
+          practiceScript.splice(idx,0,item);
+          scriptDragIdx=null;saveScript();render();
+        }
+      });
+    })(sitems[sii],parseInt(sitems[sii].getAttribute('data-si')));
+  }
+
+  // === SCRIPT: Print ===
+  var btnPrintScript=document.getElementById('btnPrintScript');
+  if(btnPrintScript)btnPrintScript.addEventListener('click',function(){exportScript()});
+
+  // === GRID EXPORT ===
+  var gridSel=document.getElementById('gridSel');
+  if(gridSel)gridSel.addEventListener('change',function(){
+    var v=parseInt(this.value);
+    if(v)exportPlayGrid(v);
+    this.value='';
+  });
+
+  // === TEXT BOX: delete from right panel ===
+  var btnDelTB=document.getElementById('btnDelTB');
+  if(btnDelTB)btnDelTB.addEventListener('click',function(){
+    if(selTextBox!==null&&card.textBoxes[selTextBox]){
+      card.textBoxes.splice(selTextBox,1);selTextBox=null;render();
+    }
+  });
+  // Text box color/size from right panel
+  var tbColorSel=document.getElementById('tbColorSel');
+  if(tbColorSel)tbColorSel.addEventListener('change',function(){
+    if(selTextBox!==null&&card.textBoxes[selTextBox]){card.textBoxes[selTextBox].color=this.value;render()}
+  });
+  var tbSizeSel=document.getElementById('tbSizeSel');
+  if(tbSizeSel)tbSizeSel.addEventListener('change',function(){
+    if(selTextBox!==null&&card.textBoxes[selTextBox]){card.textBoxes[selTextBox].size=parseInt(this.value);render()}
+  });
+}
+
+function bindDrag(){
+  var svg=document.getElementById('fSvg');
+  if(!svg)return;
+
+  svg.onmousemove=function(e){
+    // Drawing
+    if(currentLine&&drawMode&&!eraserMode){
+      var pt=svgPoint(svg,e);
+      // Throttle: only add point if moved enough
+      var last=currentLine.pts[currentLine.pts.length-1];
+      var dx=pt.x-last.x,dy=pt.y-last.y;
+      if(dx*dx+dy*dy>4){
+        currentLine.pts.push({x:pt.x,y:pt.y});
+        // Live preview: render path directly
+        var el=document.getElementById('drawPreview');
+        if(!el){
+          el=document.createElementNS('http://www.w3.org/2000/svg','path');
+          el.id='drawPreview';
+          el.setAttribute('fill','none');
+          el.setAttribute('stroke-linecap','round');
+          el.setAttribute('stroke-linejoin','round');
+          svg.appendChild(el);
+        }
+        var isCurvedPreview=(currentLine.style==='curved'||currentLine.style==='curvedarrow'||currentLine.style==='curvedblock');
+        var d;
+        if(isCurvedPreview&&currentLine.pts.length>=3){
+          d=smoothPath(currentLine.pts);
+        } else {
+          d='M '+currentLine.pts[0].x.toFixed(1)+' '+currentLine.pts[0].y.toFixed(1);
+          for(var i=1;i<currentLine.pts.length;i++){
+            d+=' L '+currentLine.pts[i].x.toFixed(1)+' '+currentLine.pts[i].y.toFixed(1);
+          }
+        }
+        el.setAttribute('d',d);
+        el.setAttribute('stroke',currentLine.color);
+        el.setAttribute('stroke-width',currentLine.width);
+        if(currentLine.style==='dashed')el.setAttribute('stroke-dasharray','8,5');
+        else el.removeAttribute('stroke-dasharray');
+      }
+      e.preventDefault();
+      return;
+    }
+
+    // Player/label/waypoint/textbox dragging
+    if(!dragInfo)return;
+    dragInfo.moved=true;
+    var pt=svgPoint(svg,e);
+    var nx=Math.max(20,Math.min(FW-20,pt.x-dragInfo.offX));
+    var ny=Math.max(5,Math.min(FH-5,pt.y-dragInfo.offY));
+    var card=cards[activeIdx];
+
+    // Waypoint drag
+    if(dragInfo.isWaypoint){
+      var wpPts=card.routePts[dragInfo.player];
+      if(wpPts&&wpPts[dragInfo.wpIdx]){
+        // Shift-constrain: snap to axis of adjacent waypoint
+        if(e.shiftKey&&wpPts.length>1){
+          var ref=wpPts[dragInfo.wpIdx>0?dragInfo.wpIdx-1:dragInfo.wpIdx+1];
+          if(Math.abs(nx-ref.x)>Math.abs(ny-ref.y)){ny=ref.y}else{nx=ref.x}
+        }
+        wpPts[dragInfo.wpIdx].x=nx;
+        wpPts[dragInfo.wpIdx].y=ny;
+        // Update handle position directly
+        var wpEl=svg.querySelector('[data-wp="'+dragInfo.player+'_'+dragInfo.wpIdx+'"]');
+        if(wpEl){wpEl.setAttribute('cx',nx);wpEl.setAttribute('cy',ny)}
+        // Update route path
+        var routeEl=svg.querySelector('[data-route="'+dragInfo.player+'"]');
+        if(routeEl&&wpPts.length>=2){
+          var d='M '+wpPts[0].x.toFixed(1)+' '+wpPts[0].y.toFixed(1);
+          for(var wi=1;wi<wpPts.length;wi++){d+=' L '+wpPts[wi].x.toFixed(1)+' '+wpPts[wi].y.toFixed(1)}
+          routeEl.setAttribute('d',d);
+        }
+      }
+      return;
+    }
+
+    // Drawn line endpoint drag
+    if(dragInfo.isLinePt){
+      var ln=card.lines[dragInfo.lineIdx];
+      if(ln&&ln.pts[dragInfo.ptIdx]){
+        ln.pts[dragInfo.ptIdx].x=nx;
+        ln.pts[dragInfo.ptIdx].y=ny;
+        // Update handle position
+        var hEl=svg.querySelector('[data-lnpt="'+dragInfo.lineIdx+'_'+dragInfo.ptIdx+'"]');
+        if(hEl){hEl.setAttribute('cx',nx);hEl.setAttribute('cy',ny)}
+        // Update line path
+        var lineEls=svg.querySelectorAll('[data-line="'+dragInfo.lineIdx+'"]');
+        if(ln.pts.length>=2){
+          var d='M '+ln.pts[0].x.toFixed(1)+' '+ln.pts[0].y.toFixed(1);
+          for(var li2=1;li2<ln.pts.length;li2++){d+=' L '+ln.pts[li2].x.toFixed(1)+' '+ln.pts[li2].y.toFixed(1)}
+          for(var le=0;le<lineEls.length;le++){if(lineEls[le].tagName==='path')lineEls[le].setAttribute('d',d)}
+        }
+        // Also update the invisible hit area
+        var hitEl=svg.querySelector('[data-linesel="'+dragInfo.lineIdx+'"]');
+        if(hitEl&&ln.pts.length>=2){
+          var d2='M '+ln.pts[0].x.toFixed(1)+' '+ln.pts[0].y.toFixed(1);
+          for(var li3=1;li3<ln.pts.length;li3++){d2+=' L '+ln.pts[li3].x.toFixed(1)+' '+ln.pts[li3].y.toFixed(1)}
+          hitEl.setAttribute('d',d2);
+        }
+      }
+      return;
+    }
+
+    // Text box drag
+    if(dragInfo.isTextBox){
+      var tb=card.textBoxes[dragInfo.idx];
+      if(tb){
+        tb.x=nx;tb.y=ny;
+        var tbEls=svg.querySelectorAll('[data-tb="'+dragInfo.idx+'"]');
+        for(var ti=0;ti<tbEls.length;ti++){
+          var tag=tbEls[ti].tagName;
+          if(tag==='rect'){
+            var rw=parseFloat(tbEls[ti].getAttribute('width'))||40;
+            var rh=parseFloat(tbEls[ti].getAttribute('height'))||18;
+            tbEls[ti].setAttribute('x',nx-rw/2);
+            tbEls[ti].setAttribute('y',ny-rh/2-2);
+          }
+        }
+        // Move text sibling
+        for(var ti2=0;ti2<tbEls.length;ti2++){
+          var nxt=tbEls[ti2].nextElementSibling;
+          if(nxt&&nxt.tagName==='text'){nxt.setAttribute('x',nx);nxt.setAttribute('y',ny)}
+        }
+      }
+      return;
+    }
+
+    // Label drag
+    if(dragInfo.isLabel){
+      if(!card.lpos)card.lpos={};
+      card.lpos[dragInfo.key]={x:nx,y:ny};
+      // Move SVG elements directly for smooth drag
+      var tdp='t_'+dragInfo.key;
+      var tels=svg.querySelectorAll('[data-dp="'+tdp+'"]');
+      for(var ti=0;ti<tels.length;ti++){
+        var tag2=tels[ti].tagName;
+        if(tag2==='rect'){
+          var rw=parseFloat(tels[ti].getAttribute('width'))||100;
+          var rh=parseFloat(tels[ti].getAttribute('height'))||18;
+          tels[ti].setAttribute('x',nx-rw/2);
+          tels[ti].setAttribute('y',ny-rh/2);
+        }
+      }
+      // Move associated text (next sibling after the rect)
+      var txts=svg.querySelectorAll('text');
+      // Find text elements near the label rect and update them
+      for(var xi=0;xi<tels.length;xi++){
+        var nxt=tels[xi].nextElementSibling;
+        if(nxt&&nxt.tagName==='text'){
+          nxt.setAttribute('x',nx);
+          nxt.setAttribute('y',ny+3);
+        }
+      }
+      return;
+    }
+
+    var anchorKey=(dragInfo.isDef?'d_':'o_')+dragInfo.key;
+    var posStore=dragInfo.isDef?'dpos':'opos';
+    var playerPool=dragInfo.isDef?getDefPlayers(card):getOffPlayers(card);
+    if(!card[posStore])card[posStore]={};
+    var oldPos=card[posStore][dragInfo.key]||playerPool[dragInfo.key]||{x:nx,y:ny};
+    var dx2=nx-oldPos.x,dy2=ny-oldPos.y;
+
+    // Sync waypoints with player position delta (offensive only)
+    if(!dragInfo.isDef&&card.routePts&&card.routePts[dragInfo.key]){
+      if(dx2!==0||dy2!==0){
+        for(var wi2=0;wi2<card.routePts[dragInfo.key].length;wi2++){
+          card.routePts[dragInfo.key][wi2].x+=dx2;
+          card.routePts[dragInfo.key][wi2].y+=dy2;
+        }
+      }
+    }
+
+    // Sync anchored drawn lines with player drag
+    if((dx2!==0||dy2!==0)&&card.lines){
+      for(var ali=0;ali<card.lines.length;ali++){
+        if(card.lines[ali].anchor===anchorKey){
+          for(var api=0;api<card.lines[ali].pts.length;api++){
+            card.lines[ali].pts[api].x+=dx2;
+            card.lines[ali].pts[api].y+=dy2;
+          }
+        }
+      }
+    }
+
+    card[posStore][dragInfo.key]={x:nx,y:ny};
+
+    // Update SVG element positions directly for smooth drag
+    var dp=(dragInfo.isDef?'d_':'o_')+dragInfo.key;
+    var els=svg.querySelectorAll('[data-dp="'+dp+'"]');
+    for(var i=0;i<els.length;i++){
+      var tag=els[i].tagName;
+      if(tag==='circle'){els[i].setAttribute('cx',nx);els[i].setAttribute('cy',ny)}
+      else if(tag==='rect'){
+        var w=parseFloat(els[i].getAttribute('width'))||20;
+        var h2=parseFloat(els[i].getAttribute('height'))||20;
+        els[i].setAttribute('x',nx-w/2);els[i].setAttribute('y',ny-h2/2);
+      }
+    }
+    // Move text label too
+    var texts=svg.querySelectorAll('text');
+    // This is expensive but necessary for real-time feedback
+    // We'll just re-render on mouseup
+  };
+
+  svg.onmouseup=function(){
+    // Commit drawing
+    if(currentLine&&drawMode&&!eraserMode){
+      if(currentLine.pts.length>=2){
+        // Simplify: reduce point count for storage
+        var simplified=simplifyLine(currentLine.pts,1.5);
+        currentLine.pts=simplified;
+        var card=cards[activeIdx];
+        pushUndo();
+        if(!card.lines)card.lines=[];
+        var newLine={pts:currentLine.pts,color:currentLine.color,width:currentLine.width,style:currentLine.style};
+        var anc=findNearestPlayer(card,currentLine.pts[0].x,currentLine.pts[0].y,18);
+        if(anc)newLine.anchor=anc.prefix+anc.key;
+        card.lines.push(newLine);
+      }
+      currentLine=null;
+      render();
+      return;
+    }
+    if(dragInfo){
+      var wasMoved=dragInfo.moved;
+      dragInfo=null;
+      if(wasMoved)render();
+    }
+  };
+
+  svg.onmouseleave=function(){
+    // Commit drawing on leave
+    if(currentLine&&drawMode){
+      if(currentLine.pts.length>=2){
+        var simplified=simplifyLine(currentLine.pts,1.5);
+        currentLine.pts=simplified;
+        var card=cards[activeIdx];
+        pushUndo();
+        if(!card.lines)card.lines=[];
+        var newLine2={pts:currentLine.pts,color:currentLine.color,width:currentLine.width,style:currentLine.style};
+        var anc2=findNearestPlayer(card,currentLine.pts[0].x,currentLine.pts[0].y,18);
+        if(anc2)newLine2.anchor=anc2.prefix+anc2.key;
+        card.lines.push(newLine2);
+      }
+      currentLine=null;
+      render();
+      return;
+    }
+    if(dragInfo){dragInfo=null;render()}
+  };
+
+  // Touch support for drawing
+  svg.ontouchstart=function(e){
+    if(!drawMode||eraserMode)return;
+    e.preventDefault();
+    var touch=e.touches[0];
+    var pt=svgPoint(svg,touch);
+    currentLine={pts:[{x:pt.x,y:pt.y}],color:drawColor,width:drawWidth,style:drawStyle};
+  };
+  svg.ontouchmove=function(e){
+    if(!currentLine||!drawMode)return;
+    e.preventDefault();
+    var touch=e.touches[0];
+    var pt=svgPoint(svg,touch);
+    var last=currentLine.pts[currentLine.pts.length-1];
+    var dx=pt.x-last.x,dy=pt.y-last.y;
+    if(dx*dx+dy*dy>4){
+      currentLine.pts.push({x:pt.x,y:pt.y});
+      var el=document.getElementById('drawPreview');
+      if(!el){
+        el=document.createElementNS('http://www.w3.org/2000/svg','path');
+        el.id='drawPreview';
+        el.setAttribute('fill','none');
+        el.setAttribute('stroke-linecap','round');
+        el.setAttribute('stroke-linejoin','round');
+        svg.appendChild(el);
+      }
+      var isCurvedTouch=(currentLine.style==='curved'||currentLine.style==='curvedarrow'||currentLine.style==='curvedblock');
+      var d;
+      if(isCurvedTouch&&currentLine.pts.length>=3){
+        d=smoothPath(currentLine.pts);
+      } else {
+        d='M '+currentLine.pts[0].x.toFixed(1)+' '+currentLine.pts[0].y.toFixed(1);
+        for(var i=1;i<currentLine.pts.length;i++){
+          d+=' L '+currentLine.pts[i].x.toFixed(1)+' '+currentLine.pts[i].y.toFixed(1);
+        }
+      }
+      el.setAttribute('d',d);
+      el.setAttribute('stroke',currentLine.color);
+      el.setAttribute('stroke-width',currentLine.width);
+    }
+  };
+  svg.ontouchend=function(e){
+    if(!currentLine||!drawMode)return;
+    if(currentLine.pts.length>=2){
+      var simplified=simplifyLine(currentLine.pts,1.5);
+      currentLine.pts=simplified;
+      var card=cards[activeIdx];
+      pushUndo();
+      if(!card.lines)card.lines=[];
+      var newLine3={pts:currentLine.pts,color:currentLine.color,width:currentLine.width,style:currentLine.style};
+      var anc3=findNearestPlayer(card,currentLine.pts[0].x,currentLine.pts[0].y,18);
+      if(anc3)newLine3.anchor=anc3.prefix+anc3.key;
+      card.lines.push(newLine3);
+    }
+    currentLine=null;
+    render();
+  };
+}
+
+// Line simplification (Ramer-Douglas-Peucker)
+function simplifyLine(pts,tol){
+  if(pts.length<=2)return pts;
+  var maxDist=0,maxIdx=0;
+  var first=pts[0],last=pts[pts.length-1];
+  for(var i=1;i<pts.length-1;i++){
+    var d=perpDist(pts[i],first,last);
+    if(d>maxDist){maxDist=d;maxIdx=i}
+  }
+  if(maxDist>tol){
+    var left=simplifyLine(pts.slice(0,maxIdx+1),tol);
+    var right=simplifyLine(pts.slice(maxIdx),tol);
+    return left.slice(0,left.length-1).concat(right);
+  }
+  return[first,last];
+}
+function perpDist(p,a,b){
+  var dx=b.x-a.x,dy=b.y-a.y;
+  var len=Math.sqrt(dx*dx+dy*dy);
+  if(len===0)return Math.sqrt((p.x-a.x)*(p.x-a.x)+(p.y-a.y)*(p.y-a.y));
+  return Math.abs(dy*p.x-dx*p.y+b.x*a.y-b.y*a.x)/len;
+}
+
+// Catmull-Rom spline to SVG cubic bezier path
+function smoothPath(pts){
+  if(pts.length<2)return '';
+  if(pts.length===2)return 'M '+pts[0].x.toFixed(1)+' '+pts[0].y.toFixed(1)+' L '+pts[1].x.toFixed(1)+' '+pts[1].y.toFixed(1);
+  var d='M '+pts[0].x.toFixed(1)+' '+pts[0].y.toFixed(1);
+  for(var i=0;i<pts.length-1;i++){
+    var p0=pts[i===0?0:i-1];
+    var p1=pts[i];
+    var p2=pts[i+1];
+    var p3=pts[i+2===pts.length?i+1:i+2];
+    // Catmull-Rom to cubic bezier control points (alpha=0.5 tension)
+    var cp1x=p1.x+(p2.x-p0.x)/6;
+    var cp1y=p1.y+(p2.y-p0.y)/6;
+    var cp2x=p2.x-(p3.x-p1.x)/6;
+    var cp2y=p2.y-(p3.y-p1.y)/6;
+    d+=' C '+cp1x.toFixed(1)+' '+cp1y.toFixed(1)+', '+cp2x.toFixed(1)+' '+cp2y.toFixed(1)+', '+p2.x.toFixed(1)+' '+p2.y.toFixed(1);
+  }
+  return d;
+}
+
+function bindDraw(){
+  // Draw bindings are handled in bindDrag now
+}
+
+// Find nearest player to a point, returns {key, prefix, dist} or null
+function findNearestPlayer(card,px,py,maxDist){
+  var best=null,bestD=maxDist||20;
+  var oP=getOffPlayers(card),dP=getDefPlayers(card);
+  var check=function(players,prefix){
+    var keys=Object.keys(players);
+    for(var i=0;i<keys.length;i++){
+      var p=players[keys[i]];
+      var d=Math.sqrt((p.x-px)*(p.x-px)+(p.y-py)*(p.y-py));
+      if(d<bestD){bestD=d;best={key:keys[i],prefix:prefix}}
+    }
+  };
+  check(oP,'o_');check(dP,'d_');
+  return best;
+}
+
+function findPlayerEl(el){
+  for(var i=0;i<6;i++){
+    if(!el)return null;
+    if(el.getAttribute&&el.getAttribute('data-dp'))return el;
+    el=el.parentNode;
+  }
+  return null;
+}
+
+function svgPoint(svg,e){
+  var pt=svg.createSVGPoint();
+  pt.x=e.clientX;pt.y=e.clientY;
+  var ctm=svg.getScreenCTM().inverse();
+  return pt.matrixTransform(ctm);
+}
+
+function upSB(){
+  var cis=document.querySelectorAll('.ci');
+  for(var i=0;i<cis.length;i++){
+    if(parseInt(cis[i].getAttribute('data-ci'))===activeIdx){
+      var cc=cards[activeIdx],cfm=FORMATIONS[cc.fk];
+      var nm=cis[i].querySelector('.card-name');if(nm)nm.textContent=cc.play||'Unnamed';
+      var cm=cis[i].querySelector('.cm');if(cm)cm.innerHTML=(cfm?cfm.name:'')+' &middot; '+cc.hash+(cc.dd?' &middot; '+cc.dd:'');
+    }
+  }
+}
+
+// ===== EXPORT FUNCTIONS =====
+function buildFullSVG(card){
+  var oPlayers = getOffPlayers(card);
+  var dPlayers = getDefPlayers(card);
+  var svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 '+FW+' '+FH+'" width="'+FW*2+'" height="'+FH*2+'">';
+  svg += buildField();
+  svg += buildDrawnLines(card.lines||[]);
+  svg += buildPlayers(dPlayers,{},null,'d_',true,card.cl);
+  svg += buildPlayers(oPlayers,card.asgn,null,'o_',false,card.cl,card.routePts);
+  svg += buildTextLabels(card);
+  svg += buildTextBoxes(card);
+  svg += '</svg>';
+  return svg;
+}
+
+function svgToCanvas(svgStr, w, h){
+  return new Promise(function(resolve){
+    var blob = new Blob([svgStr], {type:'image/svg+xml;charset=utf-8'});
+    var url = URL.createObjectURL(blob);
+    var img = new Image();
+    img.onload = function(){
+      var canvas = document.createElement('canvas');
+      canvas.width = w;
+      canvas.height = h;
+      var ctx = canvas.getContext('2d');
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(0,0,w,h);
+      ctx.drawImage(img, 0, 0, w, h);
+      URL.revokeObjectURL(url);
+      resolve(canvas);
+    };
+    img.onerror = function(){
+      URL.revokeObjectURL(url);
+      resolve(null);
+    };
+    img.src = url;
+  });
+}
+
+async function exportPNG(){
+  // Export current card as PNG
+  var card = cards[activeIdx];
+  var svgStr = buildFullSVG(card);
+  var canvas = await svgToCanvas(svgStr, FW*2, FH*2);
+  if(!canvas){alert('Export failed');return}
+  var link = document.createElement('a');
+  link.download = (card.play||'card_'+(activeIdx+1)).replace(/[^a-zA-Z0-9]/g,'_')+'.png';
+  link.href = canvas.toDataURL('image/png');
+  link.click();
+}
+
+async function exportPDF(){
+  // Export ALL cards as a multi-page PDF using jsPDF-like canvas approach
+  // We'll build a simple PDF from scratch using canvas images
+  var pw = FW*2, ph = FH*2;
+  var canvases = [];
+  for(var ci=0;ci<cards.length;ci++){
+    var svgStr = buildFullSVG(cards[ci]);
+    var canvas = await svgToCanvas(svgStr, pw, ph);
+    if(canvas) canvases.push({canvas:canvas, card:cards[ci], idx:ci});
+  }
+  if(canvases.length===0){alert('No cards to export');return}
+
+  // Build a simple multi-image PDF manually
+  // Using a minimal PDF builder
+  var images = [];
+  for(var i=0;i<canvases.length;i++){
+    images.push(canvases[i].canvas.toDataURL('image/jpeg',0.92));
+  }
+
+  // Minimal PDF generator
+  var pdf = buildPDFFromImages(images, pw, ph);
+  var blob = new Blob([pdf], {type:'application/pdf'});
+  var link = document.createElement('a');
+  link.download = (gameTitle||'scout_cards').replace(/[^a-zA-Z0-9]/g,'_')+'.pdf';
+  link.href = URL.createObjectURL(blob);
+  link.click();
+  setTimeout(function(){URL.revokeObjectURL(link.href)},5000);
+}
+
+// Minimal PDF builder (JPEG images, one per page, landscape)
+function buildPDFFromImages(jpegDataUrls, imgW, imgH){
+  // Page size: scale to fit landscape letter (792x612 pts) or use image aspect
+  var pageW = 792, pageH = Math.round(pageW * imgH / imgW);
+  var objs = [];
+  var objOffsets = [];
+  var xrefOffset;
+
+  function addObj(content){
+    var n = objs.length + 1;
+    objs.push(n + ' 0 obj\n' + content + '\nendobj\n');
+    return n;
+  }
+
+  // 1: Catalog
+  addObj('<< /Type /Catalog /Pages 2 0 R >>');
+
+  // Placeholder for Pages (will be obj 2)
+  var pagesContent = ''; // filled later
+  addObj('PLACEHOLDER');
+
+  // Build pages and image objects
+  var pageRefs = [];
+  for(var i=0;i<jpegDataUrls.length;i++){
+    var raw = atob(jpegDataUrls[i].split(',')[1]);
+    var bytes = new Uint8Array(raw.length);
+    for(var b=0;b<raw.length;b++) bytes[b] = raw.charCodeAt(b);
+
+    // Image XObject
+    var imgObjNum = addObj(
+      '<< /Type /XObject /Subtype /Image /Width '+imgW+' /Height '+imgH+
+      ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+bytes.length+' >>\n'+
+      'stream\n'
+    );
+    objs[imgObjNum-1] = imgObjNum + ' 0 obj\n' +
+      '<< /Type /XObject /Subtype /Image /Width '+imgW+' /Height '+imgH+
+      ' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+bytes.length+' >>\n'+
+      'stream\n' + raw + '\nendstream\nendobj\n';
+
+    // Content stream
+    var streamContent = 'q '+pageW+' 0 0 '+pageH+' 0 0 cm /Img'+i+' Do Q';
+    var contentNum = addObj(
+      '<< /Length '+streamContent.length+' >>\nstream\n'+streamContent+'\nendstream'
+    );
+
+    // Page
+    var pageNum = addObj(
+      '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 '+pageW+' '+pageH+']'+
+      ' /Contents '+contentNum+' 0 R'+
+      ' /Resources << /XObject << /Img'+i+' '+imgObjNum+' 0 R >> >> >>'
+    );
+    pageRefs.push(pageNum + ' 0 R');
+  }
+
+  // Fix Pages object
+  objs[1] = '2 0 obj\n<< /Type /Pages /Kids ['+pageRefs.join(' ')+'] /Count '+pageRefs.length+' >>\nendobj\n';
+
+  // Build PDF file
+  var out = '%PDF-1.4\n';
+  for(var i=0;i<objs.length;i++){
+    objOffsets.push(out.length);
+    out += objs[i];
+  }
+  xrefOffset = out.length;
+  out += 'xref\n0 '+(objs.length+1)+'\n';
+  out += '0000000000 65535 f \n';
+  for(var i=0;i<objs.length;i++){
+    out += ('0000000000'+objOffsets[i]).slice(-10)+' 00000 n \n';
+  }
+  out += 'trailer\n<< /Size '+(objs.length+1)+' /Root 1 0 R >>\n';
+  out += 'startxref\n'+xrefOffset+'\n%%EOF';
+
+  // Convert to binary
+  var binArr = new Uint8Array(out.length);
+  for(var i=0;i<out.length;i++) binArr[i] = out.charCodeAt(i) & 0xff;
+
+  // Now we need to properly embed the JPEG binary data
+  // The simple string approach above won't work for binary JPEG data
+  // Let's use a different approach - build as ArrayBuffer segments
+
+  // Actually, for simplicity and reliability, let's just export as individual PNGs in a zip
+  // or do a simpler approach: open a print window
+
+  return binArr;
+}
+
+// Simpler, more reliable export: open print-friendly window
+async function exportPrintView(){
+  var win = window.open('','_blank','width=900,height=700');
+  if(!win){alert('Please allow popups for export');return}
+  var html = '<!DOCTYPE html><html><head><title>'+esc(gameTitle)+' - Scout Cards</title>';
+  html += '<style>@page{size:landscape;margin:0.3in}body{margin:0;font-family:Arial,sans-serif}';
+  html += '.card{page-break-after:always;padding:10px;text-align:center}';
+  html += '.card:last-child{page-break-after:auto}';
+  html += '.card img{max-width:100%;max-height:90vh;border:1px solid #ccc}';
+  html += '.card-header{font-size:14px;font-weight:bold;margin-bottom:6px;color:#333}';
+  html += '.instructions{text-align:center;padding:20px;color:#666;font-size:13px;border-bottom:1px solid #ddd;margin-bottom:20px}';
+  html += '</style></head><body>';
+  html += '<div class="instructions">Press <b>Ctrl+P</b> (or Cmd+P) to print or save as PDF. Each card will be on its own page.</div>';
+
+  for(var ci=0;ci<cards.length;ci++){
+    var card = cards[ci];
+    var svgStr = buildFullSVG(card);
+    var canvas = await svgToCanvas(svgStr, FW*2, FH*2);
+    if(!canvas) continue;
+    var dataUrl = canvas.toDataURL('image/png');
+    html += '<div class="card">';
+    html += '<div class="card-header">#'+(ci+1)+' '+(card.play||'Unnamed')+' | '+(card.hash==='L'?'L Hash':card.hash==='R'?'R Hash':'Mid')+' | '+(card.dd||'')+'</div>';
+    html += '<img src="'+dataUrl+'"/>';
+    html += '</div>';
+  }
+
+  html += '</body></html>';
+  win.document.write(html);
+  win.document.close();
+}
+
+// ===== PLAY GRID EXPORT =====
+async function exportPlayGrid(perPage){
+  var layouts={2:[2,1],4:[2,2],6:[3,2]};
+  var layout=layouts[perPage]||[1,1];
+  var cols=layout[0],rows=layout[1];
+  // Get cards to export (respect tag filter)
+  var exportCards=[];
+  for(var i=0;i<cards.length;i++){
+    if(activeTagFilter&&(!cards[i].tags||cards[i].tags.indexOf(activeTagFilter)<0))continue;
+    exportCards.push(cards[i]);
+  }
+  if(exportCards.length===0){alert('No cards to export');return}
+
+  var win=window.open('','_blank','width=900,height=700');
+  if(!win){alert('Please allow popups for export');return}
+  var html='<!DOCTYPE html><html><head><title>'+esc(gameTitle)+' - Grid Export</title>';
+  html+='<style>@page{size:landscape;margin:0.2in}body{margin:0;font-family:Arial,sans-serif;background:#fff}';
+  html+='.grid-page{display:grid;grid-template-columns:repeat('+cols+',1fr);grid-template-rows:repeat('+rows+',1fr);gap:4px;padding:4px;page-break-after:always;height:calc(100vh - 8px)}';
+  html+='.grid-page:last-child{page-break-after:auto}';
+  html+='.grid-cell{border:1px solid #ccc;border-radius:4px;overflow:hidden;display:flex;flex-direction:column;align-items:center;justify-content:center;position:relative}';
+  html+='.grid-cell img{width:100%;height:auto;display:block}';
+  html+='.grid-label{position:absolute;bottom:2px;left:4px;font-size:9px;font-weight:bold;color:#333;background:rgba(255,255,255,.8);padding:1px 4px;border-radius:2px}';
+  html+='.instructions{text-align:center;padding:12px;color:#666;font-size:12px;border-bottom:1px solid #ddd}';
+  html+='</style></head><body>';
+  html+='<div class="instructions">Press <b>Ctrl+P</b> (or Cmd+P) to print. '+perPage+' cards per page.</div>';
+
+  var cardsPerPage=cols*rows;
+  var pages=Math.ceil(exportCards.length/cardsPerPage);
+  for(var pg=0;pg<pages;pg++){
+    html+='<div class="grid-page">';
+    for(var ci=0;ci<cardsPerPage;ci++){
+      var idx2=pg*cardsPerPage+ci;
+      if(idx2<exportCards.length){
+        var c=exportCards[idx2];
+        var svgStr=buildFullSVG(c);
+        var canvas=await svgToCanvas(svgStr,FW*2,FH*2);
+        if(canvas){
+          var dataUrl=canvas.toDataURL('image/png');
+          html+='<div class="grid-cell"><img src="'+dataUrl+'"/>';
+          html+='<span class="grid-label">'+(c.play||'Unnamed')+' | '+(c.dd||'')+'</span></div>';
+        } else {
+          html+='<div class="grid-cell"></div>';
+        }
+      } else {
+        html+='<div class="grid-cell"></div>';
+      }
+    }
+    html+='</div>';
+  }
+  html+='</body></html>';
+  win.document.write(html);win.document.close();
+}
+
+// ===== PRACTICE SCRIPT EXPORT =====
+async function exportScript(){
+  if(practiceScript.length===0){alert('No cards in script');return}
+  var win=window.open('','_blank','width=900,height=700');
+  if(!win){alert('Please allow popups for export');return}
+  var html='<!DOCTYPE html><html><head><title>'+esc(gameTitle)+' - Practice Script</title>';
+  html+='<style>@page{size:portrait;margin:0.4in}body{margin:0;font-family:Arial,sans-serif;background:#fff;padding:20px}';
+  html+='h1{font-size:18px;margin-bottom:4px}h2{font-size:11px;color:#666;margin-bottom:16px}';
+  html+='.period{font-size:14px;font-weight:bold;color:#1A3C2B;margin:16px 0 6px;padding:4px 0;border-bottom:2px solid #1A3C2B}';
+  html+='.s-item{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid #eee}';
+  html+='.s-num{font-weight:bold;font-size:14px;color:#333;min-width:28px}';
+  html+='.s-thumb{width:120px;height:auto;border:1px solid #ddd;border-radius:3px}';
+  html+='.s-info{flex:1}.s-play{font-weight:bold;font-size:13px}.s-meta{font-size:10px;color:#888}';
+  html+='</style></head><body>';
+  html+='<h1>'+esc(gameTitle)+'</h1><h2>Practice Script</h2>';
+
+  var curPeriod='';var num=1;
+  for(var si=0;si<practiceScript.length;si++){
+    var item=practiceScript[si];
+    var sc=null;for(var sci=0;sci<cards.length;sci++){if(cards[sci].id===item.cardId){sc=cards[sci];break}}
+    if(!sc)continue;
+    if(item.period!==curPeriod){curPeriod=item.period;html+='<div class="period">'+esc(curPeriod)+'</div>'}
+    var svgStr=buildFullSVG(sc);
+    var canvas=await svgToCanvas(svgStr,FW,FH);
+    var dataUrl=canvas?canvas.toDataURL('image/png'):'';
+    var cfm=FORMATIONS[sc.fk];
+    html+='<div class="s-item">';
+    html+='<span class="s-num">'+num+'</span>';
+    if(dataUrl)html+='<img class="s-thumb" src="'+dataUrl+'"/>';
+    html+='<div class="s-info"><div class="s-play">'+esc(sc.play||'Unnamed')+'</div>';
+    html+='<div class="s-meta">'+(cfm?cfm.name:'')+' | '+sc.hash+' | '+(sc.dd||'')+'</div></div>';
+    html+='</div>';
+    num++;
+  }
+  html+='</body></html>';
+  win.document.write(html);win.document.close();
+}
+
+// Keyboard shortcuts
+var clipboardCard=null;
+var clipboardLine=null;
+var clipboardTextBox=null;
+document.addEventListener('keydown',function(e){
+  // Skip if typing in an input
+  var tag=e.target.tagName;
+  if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT')return;
+
+  var card=cards[activeIdx];
+
+  // Cmd/Ctrl+Z: undo
+  if((e.metaKey||e.ctrlKey)&&e.key==='z'){
+    if(popUndo()){render()}
+    e.preventDefault();return;
+  }
+
+  // Escape: exit draw/eraser mode or deselect
+  if(e.key==='Escape'){
+    if(drawMode||eraserMode||textMode){
+      drawMode=false;eraserMode=false;textMode=false;currentLine=null;
+      render();e.preventDefault();return;
+    }
+    if(selLine!==null||selTextBox!==null||selPlayer){
+      selLine=null;selTextBox=null;selPlayer=null;
+      render();e.preventDefault();return;
+    }
+  }
+
+  // Delete/Backspace: delete selected line, text box, or player route
+  if(e.key==='Delete'||e.key==='Backspace'){
+    if(selLine!==null&&card.lines&&card.lines[selLine]!==undefined){
+      pushUndo();
+      card.lines.splice(selLine,1);
+      selLine=null;
+      render();e.preventDefault();return;
+    }
+    if(selTextBox!==null&&card.textBoxes&&card.textBoxes[selTextBox]!==undefined){
+      pushUndo();
+      card.textBoxes.splice(selTextBox,1);
+      selTextBox=null;
+      render();e.preventDefault();return;
+    }
+    if(selPlayer&&card.asgn[selPlayer]){
+      pushUndo();
+      delete card.asgn[selPlayer];
+      delete card.routePts[selPlayer];
+      render();e.preventDefault();return;
+    }
+  }
+
+  // Cmd/Ctrl+C: copy selected line, text box, or whole card
+  if((e.metaKey||e.ctrlKey)&&e.key==='c'){
+    if(selLine!==null&&card.lines&&card.lines[selLine]){
+      clipboardLine=JSON.parse(JSON.stringify(card.lines[selLine]));
+      clipboardCard=null;clipboardTextBox=null;
+    } else if(selTextBox!==null&&card.textBoxes&&card.textBoxes[selTextBox]){
+      clipboardTextBox=JSON.parse(JSON.stringify(card.textBoxes[selTextBox]));
+      clipboardCard=null;clipboardLine=null;
+    } else {
+      clipboardCard=JSON.parse(JSON.stringify(card));
+      clipboardLine=null;clipboardTextBox=null;
+    }
+    e.preventDefault();return;
+  }
+
+  // Cmd/Ctrl+V: paste line, text box, or card
+  if((e.metaKey||e.ctrlKey)&&e.key==='v'){
+    pushUndo();
+    if(clipboardLine){
+      var nl=JSON.parse(JSON.stringify(clipboardLine));
+      // Offset the pasted line slightly so it's visible
+      for(var i=0;i<nl.pts.length;i++){nl.pts[i].x+=10;nl.pts[i].y+=10}
+      if(!card.lines)card.lines=[];
+      card.lines.push(nl);
+      selLine=card.lines.length-1;selPlayer=null;selTextBox=null;
+      render();e.preventDefault();return;
+    }
+    if(clipboardTextBox){
+      var nt=JSON.parse(JSON.stringify(clipboardTextBox));
+      nt.x+=10;nt.y+=10;
+      if(!card.textBoxes)card.textBoxes=[];
+      card.textBoxes.push(nt);
+      selTextBox=card.textBoxes.length-1;selPlayer=null;selLine=null;
+      render();e.preventDefault();return;
+    }
+    if(clipboardCard){
+      var nc=JSON.parse(JSON.stringify(clipboardCard));
+      nc.id=nid++;
+      nc.play=nc.play?nc.play+' (copy)':nc.play;
+      cards.splice(activeIdx+1,0,nc);
+      activeIdx=activeIdx+1;
+      selPlayer=null;selLine=null;selTextBox=null;
+      render();e.preventDefault();return;
+    }
+  }
+});
+
+render();
+})();
+</script>
+</body>
+</html>

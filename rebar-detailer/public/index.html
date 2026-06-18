@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Rebar Detailer</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+  <div class="header">
+    <h1>Rebar Detailer</h1>
+    <nav>
+      <a class="active" data-view="home" onclick="showView('home')">Projects</a>
+      <a data-view="upload" onclick="showView('upload')">Upload</a>
+      <a data-view="estimating" onclick="showView('estimating')">Estimating</a>
+      <a data-view="tools" onclick="showView('tools')">Tools</a>
+    </nav>
+  </div>
+
+  <div class="container">
+    <!-- Home / Project List -->
+    <div id="view-home">
+      <div class="stats" id="global-stats"></div>
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <h2>Projects</h2>
+          <button class="btn btn-primary" onclick="showView('upload')">+ New Project</button>
+        </div>
+        <div id="project-list"></div>
+      </div>
+    </div>
+
+    <!-- Upload View -->
+    <div id="view-upload" class="hidden">
+      <div class="card">
+        <h2>Upload Structural Drawings</h2>
+        <div class="form-row" style="margin-top:12px">
+          <div class="form-group" style="flex:1">
+            <label>Project Name</label>
+            <input type="text" id="project-name" placeholder="e.g., Building A Foundation">
+          </div>
+        </div>
+        <div class="upload-zone" id="upload-zone">
+          <div class="icon">&#128206;</div>
+          <p><strong>Drop files here</strong> or click to browse</p>
+          <p>PDF, PNG, JPG, DXF, DWG — up to 50MB each</p>
+          <input type="file" id="file-input" multiple accept=".pdf,.png,.jpg,.jpeg,.tiff,.tif,.dxf,.dwg" style="display:none">
+        </div>
+        <div id="file-list" style="margin-top:12px"></div>
+        <button class="btn btn-primary" id="upload-btn" style="margin-top:12px;display:none" onclick="startUpload()">
+          Upload & Extract Rebar
+        </button>
+      </div>
+    </div>
+
+    <!-- Project Detail View -->
+    <div id="view-project" class="hidden">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <div>
+          <a style="cursor:pointer;color:var(--primary);font-size:13px" onclick="showView('home')">&larr; Back to Projects</a>
+          <h2 id="project-title" style="margin-top:4px"></h2>
+        </div>
+        <div class="btn-group">
+          <button class="btn btn-outline btn-sm" onclick="showView('upload')">+ Add Drawings</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteProject()">Delete Project</button>
+        </div>
+      </div>
+
+      <div class="stats" id="project-stats"></div>
+
+      <div class="tabs">
+        <div class="tab active" onclick="showTab('sheets')">Drawing Sheets</div>
+        <div class="tab" onclick="showTab('rebar')">Rebar Data</div>
+        <div class="tab" onclick="showTab('bbs')">Bar Bending Schedule</div>
+        <div class="tab" onclick="showTab('placing')">Placing List</div>
+      </div>
+
+      <!-- Sheets Tab -->
+      <div id="tab-sheets" class="tab-content">
+        <div id="sheets-list"></div>
+      </div>
+
+      <!-- Rebar Data Tab -->
+      <div id="tab-rebar" class="tab-content hidden">
+        <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+          <h3>Extracted Rebar Items</h3>
+          <button class="btn btn-primary btn-sm" onclick="showAddRebarForm()">+ Add Manually</button>
+        </div>
+        <div id="add-rebar-form" class="hidden card" style="margin-bottom:12px"></div>
+        <div class="table-wrap">
+          <table id="rebar-table">
+            <thead>
+              <tr>
+                <th>Conf</th>
+                <th>Mark</th>
+                <th>Size</th>
+                <th>Shape</th>
+                <th>Length</th>
+                <th>Qty</th>
+                <th>Spacing</th>
+                <th>Element</th>
+                <th>Zone</th>
+                <th>Notes</th>
+                <th>Source</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody id="rebar-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- BBS Tab -->
+      <div id="tab-bbs" class="tab-content hidden">
+        <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+          <h3>Bar Bending Schedule</h3>
+          <div class="btn-group">
+            <a class="btn btn-outline btn-sm" id="bbs-csv-link">Export CSV</a>
+            <a class="btn btn-primary btn-sm" id="bbs-pdf-link">Export PDF</a>
+          </div>
+        </div>
+        <div id="bbs-summary" class="stats"></div>
+        <div class="table-wrap">
+          <table id="bbs-table">
+            <thead>
+              <tr>
+                <th>Bar Mark</th>
+                <th>Size</th>
+                <th>Shape</th>
+                <th>Cut Length</th>
+                <th>Qty</th>
+                <th>Total (ft)</th>
+                <th>Wt/ft</th>
+                <th>Total Wt (lbs)</th>
+                <th>Grade</th>
+                <th>Notes</th>
+              </tr>
+            </thead>
+            <tbody id="bbs-tbody"></tbody>
+            <tfoot id="bbs-tfoot"></tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- Placing List Tab -->
+      <div id="tab-placing" class="tab-content hidden">
+        <div style="display:flex;justify-content:space-between;margin-bottom:12px">
+          <h3>Placing List</h3>
+          <div class="btn-group">
+            <a class="btn btn-outline btn-sm" id="placing-csv-link">Export CSV</a>
+            <a class="btn btn-primary btn-sm" id="placing-pdf-link">Export PDF</a>
+          </div>
+        </div>
+        <div id="placing-content"></div>
+      </div>
+    </div>
+  </div>
+
+    <!-- Estimating View -->
+    <div id="view-estimating" class="hidden">
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+          <h2>Rebar Estimating Takeoff</h2>
+          <div class="btn-group">
+            <button class="btn btn-outline btn-sm" onclick="loadEstimatesList()">Saved Estimates</button>
+          </div>
+        </div>
+
+        <!-- Saved estimates list -->
+        <div id="est-saved-list" class="hidden" style="margin-bottom:16px"></div>
+
+        <!-- Drawing Upload for Auto-Extraction -->
+        <div style="margin-bottom:16px">
+          <div class="upload-zone" id="est-upload-zone" style="padding:24px 16px">
+            <div class="icon" style="font-size:32px">&#128196;</div>
+            <p><strong>Drop structural drawings here</strong> to auto-extract building elements</p>
+            <p style="font-size:12px">PDF, PNG, JPG, DXF — AI will identify footings, columns, beams, slabs, walls and their dimensions</p>
+            <input type="file" id="est-file-input" multiple accept=".pdf,.png,.jpg,.jpeg,.tiff,.tif,.dxf" style="display:none">
+          </div>
+          <div id="est-file-list" style="margin-top:8px"></div>
+          <button class="btn btn-primary" id="est-upload-btn" style="margin-top:8px;display:none" onclick="startEstimatingUpload()">
+            Upload & Extract Elements
+          </button>
+        </div>
+
+        <div style="text-align:center;color:var(--text-muted);font-size:13px;margin-bottom:16px">— or enter manually —</div>
+
+        <!-- New estimate form -->
+        <div class="form-row">
+          <div class="form-group" style="flex:2">
+            <label>Project Name</label>
+            <input type="text" id="est-project-name" placeholder="e.g., 123 Main St Office Building">
+          </div>
+          <div class="form-group" style="flex:1">
+            <label>Building Template</label>
+            <select id="est-template" onchange="applyTemplate()">
+              <option value="">-- Start blank --</option>
+              <option value="low_rise_office">Low-Rise Office (1-3 stories)</option>
+              <option value="mid_rise_residential">Mid-Rise Residential (4-8 stories)</option>
+              <option value="high_rise">High-Rise (9+ stories)</option>
+              <option value="warehouse">Warehouse / Industrial</option>
+              <option value="parking_garage">Parking Garage</option>
+              <option value="retaining_wall_project">Retaining Wall Project</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Adjustment factors -->
+        <div class="form-row" style="margin-top:8px">
+          <div class="form-group">
+            <label>Waste %</label>
+            <input type="number" id="est-waste" value="5" min="0" max="20" step="1" style="width:70px" onchange="recalcEstimate()">
+          </div>
+          <div class="form-group">
+            <label>Lap Splice %</label>
+            <input type="number" id="est-lap" value="10" min="0" max="25" step="1" style="width:70px" onchange="recalcEstimate()">
+          </div>
+          <div class="form-group">
+            <label>Accessories %</label>
+            <input type="number" id="est-accessories" value="3" min="0" max="10" step="1" style="width:70px" onchange="recalcEstimate()">
+          </div>
+        </div>
+      </div>
+
+      <!-- Elements table -->
+      <div class="card">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+          <h3>Building Elements</h3>
+          <button class="btn btn-primary btn-sm" onclick="addEstElement()">+ Add Element</button>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th style="width:140px">Element Name</th>
+                <th style="width:150px">Type</th>
+                <th style="width:90px">Input</th>
+                <th style="width:70px">L (ft)</th>
+                <th style="width:70px">W (ft)</th>
+                <th style="width:70px">D (ft)</th>
+                <th style="width:50px">Qty</th>
+                <th style="width:80px">CY / SF</th>
+                <th style="width:90px">Density</th>
+                <th style="width:80px">lbs/CY</th>
+                <th style="width:80px">Conc (CY)</th>
+                <th style="width:90px">Rebar (lbs)</th>
+                <th style="width:80px">Rebar (T)</th>
+                <th style="width:50px"></th>
+              </tr>
+            </thead>
+            <tbody id="est-elements-tbody"></tbody>
+            <tfoot id="est-elements-tfoot"></tfoot>
+          </table>
+        </div>
+      </div>
+
+      <!-- Totals summary -->
+      <div id="est-totals" class="card hidden">
+        <h3>Estimate Summary</h3>
+        <div class="stats" id="est-stats"></div>
+        <div class="table-wrap" style="margin-top:12px">
+          <table id="est-breakdown-table">
+            <tbody id="est-breakdown-tbody"></tbody>
+          </table>
+        </div>
+        <div class="btn-group" style="margin-top:16px">
+          <button class="btn btn-primary" onclick="saveCurrentEstimate()">Save Estimate</button>
+          <button class="btn btn-outline" onclick="exportEstimateCSV()">Export CSV</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tools View -->
+    <div id="view-tools" class="hidden">
+      <div class="card">
+        <h2>Rebar Tools</h2>
+        <div class="tools-nav" style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+          <button class="btn btn-primary btn-sm" onclick="showTool('bid')">Pricing & Bid</button>
+          <button class="btn btn-outline btn-sm" onclick="showTool('stock')">Stock Optimizer</button>
+          <button class="btn btn-outline btn-sm" onclick="showTool('labor')">Labor Calculator</button>
+          <button class="btn btn-outline btn-sm" onclick="showTool('po')">Material PO</button>
+          <button class="btn btn-outline btn-sm" onclick="showTool('compare')">Est. vs Actual</button>
+          <button class="btn btn-outline btn-sm" onclick="showTool('charts')">Dashboard Charts</button>
+          <button class="btn btn-outline btn-sm" onclick="showTool('markup')">Shop Drawing Markup</button>
+        </div>
+      </div>
+
+      <!-- Pricing & Bid Tool -->
+      <div id="tool-bid" class="tool-panel">
+        <div class="card">
+          <h3>Pricing & Bid Generator</h3>
+          <p style="color:var(--text-muted);font-size:13px;margin-bottom:12px">Generate a complete bid with material costs, labor, overhead, and profit.</p>
+          <div class="form-row">
+            <div class="form-group"><label>Source</label>
+              <select id="bid-source" onchange="toggleBidSource()">
+                <option value="manual">Manual Entry</option>
+                <option value="project">From Project BBS</option>
+              </select>
+            </div>
+            <div class="form-group" id="bid-project-group" style="display:none"><label>Project</label>
+              <select id="bid-project-id"></select>
+            </div>
+          </div>
+          <div id="bid-manual-elements">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 8px">
+              <strong>Bid Elements</strong>
+              <button class="btn btn-outline btn-sm" onclick="addBidElement()">+ Add</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Name</th><th>Type</th><th>Bar Size</th><th>Tons</th><th>Coating</th><th></th></tr></thead>
+                <tbody id="bid-elements-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="form-row" style="margin-top:12px">
+            <div class="form-group"><label>Overhead %</label><input type="number" id="bid-overhead" value="10" min="0" max="30"></div>
+            <div class="form-group"><label>Profit %</label><input type="number" id="bid-profit" value="10" min="0" max="30"></div>
+            <div class="form-group"><label>Bond %</label><input type="number" id="bid-bond" value="2" min="0" max="5"></div>
+            <div class="form-group"><label>Sales Tax %</label><input type="number" id="bid-tax" value="0" min="0" max="12"></div>
+          </div>
+          <button class="btn btn-primary" onclick="generateBid()" style="margin-top:12px">Generate Bid</button>
+        </div>
+        <div id="bid-result" class="hidden"></div>
+      </div>
+
+      <!-- Stock Optimizer Tool -->
+      <div id="tool-stock" class="tool-panel hidden">
+        <div class="card">
+          <h3>Stock Length Optimizer</h3>
+          <p style="color:var(--text-muted);font-size:13px;margin-bottom:12px">Optimize cutting patterns to minimize scrap waste.</p>
+          <div class="form-row">
+            <div class="form-group"><label>Source</label>
+              <select id="stock-source" onchange="toggleStockSource()">
+                <option value="manual">Manual Entry</option>
+                <option value="project">From Project BBS</option>
+              </select>
+            </div>
+            <div class="form-group" id="stock-project-group" style="display:none"><label>Project</label>
+              <select id="stock-project-id"></select>
+            </div>
+          </div>
+          <div id="stock-manual-reqs">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 8px">
+              <strong>Cut Requirements</strong>
+              <button class="btn btn-outline btn-sm" onclick="addStockReq()">+ Add</button>
+            </div>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Bar Mark</th><th>Bar Size</th><th>Cut Length (ft)</th><th>Qty</th><th></th></tr></thead>
+                <tbody id="stock-reqs-tbody"></tbody>
+              </table>
+            </div>
+          </div>
+          <div class="form-row" style="margin-top:12px">
+            <div class="form-group"><label>Available Stock Lengths (ft)</label>
+              <input type="text" id="stock-lengths" value="20, 30, 40, 60" placeholder="20, 30, 40, 60">
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="runStockOptimizer()" style="margin-top:12px">Optimize</button>
+        </div>
+        <div id="stock-result" class="hidden"></div>
+      </div>
+
+      <!-- Labor Calculator Tool -->
+      <div id="tool-labor" class="tool-panel hidden">
+        <div class="card">
+          <h3>Labor Hour Calculator</h3>
+          <p style="color:var(--text-muted);font-size:13px;margin-bottom:12px">Estimate crew days, labor hours, and costs by element type.</p>
+          <div class="form-row">
+            <div class="form-group"><label>Hourly Rate ($/hr)</label><input type="number" id="labor-rate" value="85" min="0"></div>
+          </div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin:12px 0 8px">
+            <strong>Elements</strong>
+            <button class="btn btn-outline btn-sm" onclick="addLaborElement()">+ Add</button>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Name</th><th>Type</th><th>Tons</th><th></th></tr></thead>
+              <tbody id="labor-elements-tbody"></tbody>
+            </table>
+          </div>
+          <button class="btn btn-primary" onclick="runLaborCalc()" style="margin-top:12px">Calculate</button>
+        </div>
+        <div id="labor-result" class="hidden"></div>
+      </div>
+
+      <!-- Material PO Tool -->
+      <div id="tool-po" class="tool-panel hidden">
+        <div class="card">
+          <h3>Material Purchase Order</h3>
+          <p style="color:var(--text-muted);font-size:13px;margin-bottom:12px">Generate a purchase order from optimized stock lengths.</p>
+          <div class="form-row">
+            <div class="form-group" style="flex:2"><label>Project Name</label><input type="text" id="po-project-name" placeholder="Project name"></div>
+            <div class="form-group" style="flex:2"><label>Supplier</label><input type="text" id="po-supplier" placeholder="Supplier name"></div>
+          </div>
+          <div class="form-row">
+            <div class="form-group"><label>Source</label>
+              <select id="po-source" onchange="togglePOSource()">
+                <option value="project">From Project BBS</option>
+                <option value="stock">From Last Stock Optimization</option>
+              </select>
+            </div>
+            <div class="form-group" id="po-project-group"><label>Project</label>
+              <select id="po-project-id"></select>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="generatePO()" style="margin-top:12px">Generate PO</button>
+        </div>
+        <div id="po-result" class="hidden"></div>
+      </div>
+
+      <!-- Dashboard Charts Tool -->
+      <div id="tool-charts" class="tool-panel hidden">
+        <div class="card">
+          <h3>Project Dashboard Charts</h3>
+          <p style="color:var(--text-muted);font-size:13px;margin-bottom:12px">Visual breakdown of rebar quantities and weights for a project.</p>
+          <div class="form-row">
+            <div class="form-group"><label>Project</label><select id="charts-project-id"></select></div>
+            <button class="btn btn-primary" onclick="loadCharts()" style="margin-top:auto">Load Charts</button>
+          </div>
+        </div>
+        <div id="charts-result" class="hidden">
+          <div class="stats" id="charts-stats"></div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px">
+            <div class="card"><h4>Weight by Bar Size (lbs)</h4><div id="chart-weight-size"></div></div>
+            <div class="card"><h4>Quantity by Bar Size</h4><div id="chart-qty-size"></div></div>
+            <div class="card"><h4>Weight by Element (lbs)</h4><div id="chart-weight-element"></div></div>
+            <div class="card"><h4>Data Confidence</h4><div id="chart-confidence"></div></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Shop Drawing Markup Tool -->
+      <div id="tool-markup" class="tool-panel hidden">
+        <div class="card">
+          <h3>Shop Drawing Markup</h3>
+          <p style="color:var(--text-muted);font-size:13px;margin-bottom:12px">Annotate drawing sheets with text, circles, and arrows for review.</p>
+          <div class="form-row">
+            <div class="form-group"><label>Project</label><select id="markup-project-id" onchange="loadMarkupSheets()"></select></div>
+            <div class="form-group"><label>Sheet</label><select id="markup-sheet-id"></select></div>
+            <button class="btn btn-primary" onclick="openMarkupEditor()" style="margin-top:auto">Open Editor</button>
+          </div>
+        </div>
+        <div id="markup-editor" class="hidden">
+          <div class="card">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+              <div class="btn-group">
+                <button class="btn btn-sm markup-tool-btn active" onclick="setMarkupTool('text')" data-tool="text">Text</button>
+                <button class="btn btn-sm markup-tool-btn" onclick="setMarkupTool('circle')" data-tool="circle">Circle</button>
+                <button class="btn btn-sm markup-tool-btn" onclick="setMarkupTool('arrow')" data-tool="arrow">Arrow</button>
+                <button class="btn btn-sm markup-tool-btn" onclick="setMarkupTool('rect')" data-tool="rect">Rectangle</button>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center">
+                <label style="font-size:12px">Color:</label>
+                <input type="color" id="markup-color" value="#ff0000" style="width:32px;height:28px;border:none;cursor:pointer">
+                <label style="font-size:12px">Size:</label>
+                <input type="range" id="markup-size" min="1" max="8" value="3" style="width:80px">
+                <button class="btn btn-outline btn-sm" onclick="undoMarkup()">Undo</button>
+                <button class="btn btn-outline btn-sm" onclick="clearMarkup()">Clear</button>
+                <button class="btn btn-primary btn-sm" onclick="saveMarkup()">Save</button>
+              </div>
+            </div>
+            <div id="markup-canvas-container" style="position:relative;overflow:auto;border:1px solid var(--border);border-radius:8px;background:#f8f8f8;max-height:700px">
+              <canvas id="markup-canvas" style="cursor:crosshair"></canvas>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Estimate vs Actual Tool -->
+      <div id="tool-compare" class="tool-panel hidden">
+        <div class="card">
+          <h3>Estimate vs. Actual Tracker</h3>
+          <p style="color:var(--text-muted);font-size:13px;margin-bottom:12px">Compare estimated tonnage against actual placed quantities.</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div>
+              <strong>Estimated</strong>
+              <div style="display:flex;justify-content:flex-end;margin:8px 0 4px"><button class="btn btn-outline btn-sm" onclick="addCompareRow('est')">+ Add</button></div>
+              <table><thead><tr><th>Name</th><th>Type</th><th>Tons</th><th></th></tr></thead>
+              <tbody id="compare-est-tbody"></tbody></table>
+            </div>
+            <div>
+              <strong>Actual</strong>
+              <div style="display:flex;justify-content:flex-end;margin:8px 0 4px"><button class="btn btn-outline btn-sm" onclick="addCompareRow('act')">+ Add</button></div>
+              <table><thead><tr><th>Name</th><th>Type</th><th>Tons</th><th></th></tr></thead>
+              <tbody id="compare-act-tbody"></tbody></table>
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="runComparison()" style="margin-top:12px">Compare</button>
+        </div>
+        <div id="compare-result" class="hidden"></div>
+      </div>
+    </div>
+
+  <!-- Loading overlay -->
+  <div id="loading" class="loading-overlay hidden">
+    <div class="loading-box">
+      <div class="spinner"></div>
+      <p id="loading-text">Processing drawings...</p>
+    </div>
+  </div>
+
+  <script src="/js/utils/api.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>
